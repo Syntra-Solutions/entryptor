@@ -17,7 +17,7 @@ A secure file encryption and decryption application for macOS, featuring a moder
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/entryptor.git
+git clone https://github.com/Syntra-Solutions/entryptor.git
 cd entryptor
 ```
 
@@ -33,7 +33,7 @@ python entryptor.py
 
 ### Pre-built Binaries
 
-Download the latest release from the [Releases](https://github.com/yourusername/entryptor/releases) page.
+Download the latest release from the [Releases](https://github.com/Syntra-Solutions/entryptor/releases) page.
 
 ## Usage
 
