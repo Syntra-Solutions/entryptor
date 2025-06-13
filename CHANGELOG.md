@@ -2,7 +2,7 @@
 
 All notable changes to Entryptor will be documented in this file.
 
-## [1.0.0] - 2024-03-13
+## [1.0.0] - 2025-06-13
 ### Added
 - Initial release
 - Basic file encryption/decryption functionality
@@ -10,7 +10,7 @@ All notable changes to Entryptor will be documented in this file.
 - Password-based encryption using Fernet
 - File extension preservation options
 
-## [1.0.1] - 2024-03-13
+## [1.0.1] - 2025-06-13
 ### Added
 - Password strength validation
 - Secure memory handling
