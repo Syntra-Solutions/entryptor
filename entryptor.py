@@ -314,7 +314,7 @@ class EntryptorApp(QMainWindow):
         settings_shadow.setColor(QColor(0, 0, 0, 100))
         settings_shadow.setOffset(0, 2)
         settings_button.setGraphicsEffect(settings_shadow)
-        settings_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
+        settings_button.setIcon(QIcon("gear.png"))
         settings_button.setIconSize(QSize(20, 20))
         settings_button.clicked.connect(self.show_settings)
 
