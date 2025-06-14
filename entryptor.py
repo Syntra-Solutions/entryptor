@@ -3,9 +3,10 @@ import os
 import re
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
-                            QGraphicsDropShadowEffect, QMessageBox, QComboBox)
-from PyQt6.QtCore import Qt, QMimeData, QPointF
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor
+                            QGraphicsDropShadowEffect, QMessageBox, QComboBox, QCheckBox,
+                            QTextBrowser, QDialog)
+from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor, QIcon, QFont
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -14,6 +15,7 @@ import base64
 import json
 import weakref
 import gc
+from PyQt6.QtWidgets import QStyle
 
 # Version information
 VERSION = "1.0.1"
@@ -103,6 +105,69 @@ class DropBox(QWidget):
             self.original_extension = os.path.splitext(self.file_path)[1]
             self.label.setText(os.path.basename(self.file_path))
 
+class HelpDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Entryptor Help")
+        self.setMinimumSize(800, 600)
+        
+        # Create layout
+        layout = QVBoxLayout()
+        
+        # Create text browser
+        self.text_browser = QTextBrowser()
+        self.text_browser.setOpenExternalLinks(True)
+        self.text_browser.setFont(QFont("Arial", 11))
+        
+        # Load help content
+        try:
+            with open("HELP.md", "r", encoding="utf-8") as f:
+                help_content = f.read()
+                self.text_browser.setMarkdown(help_content)
+        except Exception as e:
+            self.text_browser.setPlainText(f"Error loading help content: {str(e)}")
+        
+        layout.addWidget(self.text_browser)
+        
+        # Add close button
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        layout.addWidget(close_button)
+        
+        self.setLayout(layout)
+
+class SettingsDialog(QDialog):
+    def __init__(self, current_extension_option, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.setMinimumSize(400, 250)
+        layout = QVBoxLayout()
+
+        # Extension handling option
+        self.extension_combo = QComboBox()
+        self.extension_combo.addItems(["Preserve original extension (Less secure)", "Manual extension selection (More secure)"])
+        self.extension_combo.setCurrentText(current_extension_option)
+        layout.addWidget(QLabel("Extension handling:"))
+        layout.addWidget(self.extension_combo)
+
+        # Spacer
+        layout.addStretch()
+
+        # Footer
+        copyright_label = QLabel(f"© {COPYRIGHT_YEAR} {COMPANY_NAME}")
+        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(copyright_label)
+
+        # Save button
+        save_button = QPushButton("Save")
+        save_button.clicked.connect(self.accept)
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+    def get_extension_option(self):
+        return self.extension_combo.currentText()
+
 class EntryptorApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -177,18 +242,12 @@ class EntryptorApp(QMainWindow):
         self.encrypt_password_confirm.setPlaceholderText("Confirm password")
         self.encrypt_password_confirm.setEchoMode(QLineEdit.EchoMode.Password)
         
-        # Add extension preservation option
-        self.extension_preservation = QComboBox()
-        self.extension_preservation.addItems(["Preserve original extension", "Manual extension selection"])
-        
         self.encrypt_button = QPushButton("Encrypt")
         self.encrypt_button.clicked.connect(self.encrypt_file)
         
         left_layout.addWidget(self.encrypt_dropbox)
         left_layout.addWidget(self.encrypt_password)
         left_layout.addWidget(self.encrypt_password_confirm)
-        left_layout.addWidget(QLabel("Extension handling:"))
-        left_layout.addWidget(self.extension_preservation)
         left_layout.addWidget(self.encrypt_button)
 
         # Create right column (Decryption)
@@ -214,11 +273,59 @@ class EntryptorApp(QMainWindow):
         # Add content layout to main layout
         main_layout.addLayout(content_layout)
 
-        # Add copyright notice at the bottom
-        copyright_label = QLabel(f"{COMPANY_NAME} ©{COPYRIGHT_YEAR}, v{VERSION}")
-        copyright_label.setObjectName("copyright")
-        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        main_layout.addWidget(copyright_label)
+        # Add help and settings buttons
+        help_button = QPushButton("?")
+        help_button.setMinimumSize(32, 32)
+        help_button.setMaximumSize(32, 32)
+        help_button.setStyleSheet("""
+            QPushButton {
+                background-color: #808080;
+                color: white;
+                border: 2px solid #606060;
+                border-radius: 16px;
+                padding: 0px;
+                font-weight: bold;
+                font-size: 20px;
+                font-family: Arial;
+            }
+            QPushButton:hover {
+                background-color: #606060;
+                border: 2px solid #404040;
+            }
+            QPushButton:pressed {
+                background-color: #505050;
+                border: 2px solid #303030;
+            }
+        """)
+        help_shadow = QGraphicsDropShadowEffect()
+        help_shadow.setBlurRadius(15)
+        help_shadow.setColor(QColor(0, 0, 0, 100))
+        help_shadow.setOffset(0, 2)
+        help_button.setGraphicsEffect(help_shadow)
+        help_button.clicked.connect(self.show_help)
+
+        # Settings button with gear icon
+        settings_button = QPushButton()
+        settings_button.setMinimumSize(32, 32)
+        settings_button.setMaximumSize(32, 32)
+        settings_button.setStyleSheet(help_button.styleSheet())
+        settings_shadow = QGraphicsDropShadowEffect()
+        settings_shadow.setBlurRadius(15)
+        settings_shadow.setColor(QColor(0, 0, 0, 100))
+        settings_shadow.setOffset(0, 2)
+        settings_button.setGraphicsEffect(settings_shadow)
+        settings_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
+        settings_button.setIconSize(QSize(20, 20))
+        settings_button.clicked.connect(self.show_settings)
+
+        # Add help and settings buttons to layout
+        help_settings_layout = QHBoxLayout()
+        help_settings_layout.setContentsMargins(0, 0, 0, 0)
+        help_settings_layout.setSpacing(8)
+        help_settings_layout.addStretch()
+        help_settings_layout.addWidget(help_button)
+        help_settings_layout.addWidget(settings_button)
+        main_layout.addLayout(help_settings_layout)
 
     def show_error(self, message):
         msg = QMessageBox(self)
@@ -243,39 +350,32 @@ class EntryptorApp(QMainWindow):
     def encrypt_file(self):
         if not self.encrypt_dropbox.file_path or not self.encrypt_password.text() or not self.encrypt_password_confirm.text():
             return
-            
         if self.encrypt_password.text() != self.encrypt_password_confirm.text():
             self.show_error("Passwords do not match.")
             return
-            
         # Validate password strength
         is_valid, error_message = validate_password(self.encrypt_password.text())
         if not is_valid:
             self.show_error(error_message)
             return
-            
         try:
             # Read the file
             with open(self.encrypt_dropbox.file_path, 'rb') as f:
                 data = f.read()
-
             # Create secure password wrapper
             secure_password = SecurePassword(self.encrypt_password.text())
-            
             # Generate key and salt
             key, salt = self.derive_key(secure_password)
             f = Fernet(key)
-
             # Encrypt the data
             encrypted_data = f.encrypt(data)
-
             # Create metadata
+            preserve_ext = getattr(self, 'extension_preservation_option', "Preserve original extension") == "Preserve original extension"
             metadata = {
-                'preserve_extension': self.extension_preservation.currentText() == "Preserve original extension",
-                'original_extension': self.encrypt_dropbox.original_extension if self.extension_preservation.currentText() == "Preserve original extension" else None
+                'preserve_extension': preserve_ext,
+                'original_extension': self.encrypt_dropbox.original_extension if preserve_ext else None
             }
             metadata_bytes = json.dumps(metadata).encode()
-
             # Save the encrypted file
             save_path, _ = QFileDialog.getSaveFileName(
                 self, "Save Encrypted File", "", "Encrypted Files (*.enc)"
@@ -290,7 +390,6 @@ class EntryptorApp(QMainWindow):
                 self.encrypt_dropbox.original_extension = None
                 self.encrypt_password.clear()
                 self.encrypt_password_confirm.clear()
-
         except Exception as e:
             self.show_error(f"Encryption error: {str(e)}")
         finally:
@@ -358,6 +457,17 @@ class EntryptorApp(QMainWindow):
             if 'secure_password' in locals():
                 del secure_password
             gc.collect()
+
+    def show_help(self):
+        help_dialog = HelpDialog(self)
+        help_dialog.exec()
+
+    def show_settings(self):
+        # Show the settings dialog and update extension handling if saved
+        current_option = getattr(self, 'extension_preservation_option', "Preserve original extension")
+        dlg = SettingsDialog(current_option, self)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.extension_preservation_option = dlg.get_extension_option()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
