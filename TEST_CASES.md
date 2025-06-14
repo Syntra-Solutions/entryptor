@@ -56,6 +56,25 @@
    - Test progress bar with large files
    - Test progress bar with multiple files
 
+### Password Requirements UI
+
+1. **Password Requirements Icons**
+   - Verify that five gray, circular icons are displayed below the encryption password input field.
+   - As the user types, each icon turns green when its requirement is met:
+     - 12+ characters
+     - At least one uppercase letter
+     - At least one lowercase letter
+     - At least one number
+     - At least one special character
+   - Icons remain gray for unmet requirements and green for met requirements.
+   - Icons are visually contained within the input container, below a faint horizontal line.
+
+2. **Password Confirmation Icon**
+   - Verify that a single gray, circular checkmark icon is displayed below the confirmation password input field.
+   - The icon turns green when the confirmation password matches the main password.
+   - The icon remains gray if the passwords do not match or are empty.
+   - The icon is visually contained within the input container, below a faint horizontal line.
+
 ## Non-Functional Test Cases
 
 ### Performance
