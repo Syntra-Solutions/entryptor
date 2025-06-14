@@ -18,7 +18,7 @@ import gc
 from PyQt6.QtWidgets import QStyle
 
 # Version information
-VERSION = "1.0.1"
+VERSION = "1.0.0-beta"
 COPYRIGHT_YEAR = "2025"
 COMPANY_NAME = "Syntra for Business Solutions"
 
@@ -154,7 +154,7 @@ class SettingsDialog(QDialog):
         layout.addStretch()
 
         # Footer
-        copyright_label = QLabel(f"© {COPYRIGHT_YEAR} {COMPANY_NAME}")
+        copyright_label = QLabel(f"© {COPYRIGHT_YEAR} {COMPANY_NAME} v{VERSION}")
         copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(copyright_label)
 
