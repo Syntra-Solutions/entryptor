@@ -2,7 +2,7 @@
 
 All notable changes to Entryptor will be documented in this file.
 
-## [1.0.0] - 2025-06-13
+## [1.0.0-alpha] - 2025-06-13
 ### Added
 - Initial release
 - Basic file encryption/decryption functionality
@@ -10,7 +10,7 @@ All notable changes to Entryptor will be documented in this file.
 - Password-based encryption using Fernet
 - File extension preservation options
 
-## [1.0.1] - 2025-06-13
+## [1.0.1-alpha] - 2025-06-13
 ### Added
 - Password strength validation
 - Secure memory handling
@@ -31,4 +31,17 @@ All notable changes to Entryptor will be documented in this file.
 ### UI/UX
 - Added dropdown for extension preservation options
 - Added version and copyright information
-- Improved error messages and validation feedback 
+- Improved error messages and validation feedback
+
+## [1.0.0-beta] - 2025-06-14
+### Added
+- Live password requirements icons below encryption password input, with real-time color change for each requirement
+- Live confirmation check icon below confirmation password input, with real-time color change when passwords match
+- Two-line input containers for password and confirmation fields, with horizontal line and icon row inside the container
+- Unified border and background styling for password containers and DropBox widgets (encryption and decryption)
+- Updated test cases to cover password requirements UI and confirmation icon behavior
+
+### Fixed
+- Improved centering and alignment of icon symbols and help button
+- Ensured icons and lines are visually contained within input containers
+- Removed custom icon references from build spec for compatibility 
