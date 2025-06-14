@@ -47,5 +47,4 @@ All notable changes to Entryptor will be documented in this file.
 - Removed custom icon references from build spec for compatibility 
 
 ### Known Issues - planned to be resolved in 1.0.1-beta
-- File extension preserve setting is not working as intended
 - Settings icon is missing in this version
