@@ -4,8 +4,8 @@ import re
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
                             QGraphicsDropShadowEffect, QMessageBox, QComboBox, QCheckBox,
-                            QTextBrowser, QDialog, QFrame)
-from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize
+                            QTextBrowser, QDialog, QFrame, QGraphicsOpacityEffect)
+from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize, QPropertyAnimation
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor, QIcon, QFont, QPixmap, QPainter
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -283,13 +283,13 @@ class EntryptorApp(QMainWindow):
         self.encrypt_password.setMinimumHeight(28)
         self.encrypt_password.setStyleSheet("background: transparent; border: none;")
         pw_vlayout.addWidget(self.encrypt_password)
-        pw_vlayout.addSpacing(5)
+        pw_vlayout.addSpacing(10)
         pw_line = QFrame()
         pw_line.setFrameShape(QFrame.Shape.HLine)
         pw_line.setFrameShadow(QFrame.Shadow.Plain)
         pw_line.setStyleSheet("background: #444; color: #444; min-height: 1px; max-height: 1px; border: none;")
         pw_vlayout.addWidget(pw_line)
-        pw_vlayout.addSpacing(5)
+        pw_vlayout.addSpacing(15)
         pw_icon_row = QWidget()
         pw_icon_row.setStyleSheet("background: transparent; border: none;")
         pw_icon_layout = QHBoxLayout(pw_icon_row)
@@ -318,13 +318,13 @@ class EntryptorApp(QMainWindow):
         self.encrypt_password_confirm.setMinimumHeight(28)
         self.encrypt_password_confirm.setStyleSheet("background: transparent; border: none;")
         confirm_vlayout.addWidget(self.encrypt_password_confirm)
-        confirm_vlayout.addSpacing(5)
+        confirm_vlayout.addSpacing(10)
         confirm_line = QFrame()
         confirm_line.setFrameShape(QFrame.Shape.HLine)
         confirm_line.setFrameShadow(QFrame.Shadow.Plain)
         confirm_line.setStyleSheet("background: #444; color: #444; min-height: 1px; max-height: 1px; border: none;")
         confirm_vlayout.addWidget(confirm_line)
-        confirm_vlayout.addSpacing(5)
+        confirm_vlayout.addSpacing(15)
         confirm_icon_row = QWidget()
         confirm_icon_row.setStyleSheet("background: transparent; border: none;")
         confirm_icon_layout = QHBoxLayout(confirm_icon_row)
@@ -336,13 +336,29 @@ class EntryptorApp(QMainWindow):
         confirm_icon_layout.addStretch()
         confirm_vlayout.addWidget(confirm_icon_row)
 
-        # Add widgets to left_layout
-        left_layout.addWidget(self.encrypt_dropbox)
-        left_layout.addWidget(pw_container)
-        left_layout.addWidget(confirm_container)
-        left_layout.addWidget(self.encrypt_button)
+        # Add widgets to left_layout with correct stretch
+        left_layout.addWidget(self.encrypt_dropbox, 1)
+        left_layout.addWidget(pw_container, 0)
+        left_layout.addWidget(confirm_container, 0)
+        left_layout.addWidget(self.encrypt_button, 0)
 
-        # Live update icons as user types
+        # Set up opacity effects and store animations for password icons
+        self.pw_icon_effects = []
+        self.pw_icon_animations = []
+        for label in self.pw_icon_labels:
+            effect = QGraphicsOpacityEffect()
+            label.setGraphicsEffect(effect)
+            effect.setOpacity(0.5)
+            self.pw_icon_effects.append(effect)
+            self.pw_icon_animations.append(None)
+
+        # Set up opacity effect for confirmation icon
+        self.pw_confirm_effect = QGraphicsOpacityEffect()
+        self.pw_confirm_icon.setGraphicsEffect(self.pw_confirm_effect)
+        self.pw_confirm_effect.setOpacity(0.5)
+        self.pw_confirm_animation = None
+
+        # Live update icons as user types, with fade animation
         def update_pw_icons():
             pw = self.encrypt_password.text()
             checks = [
@@ -355,6 +371,16 @@ class EntryptorApp(QMainWindow):
             for i, ok in enumerate(checks):
                 symbol = pw_reqs[i][1]
                 self.pw_icon_labels[i].setPixmap(make_circle_icon(ok, symbol, 0.5 if not ok else 1.0).pixmap(24,24))
+                # Animate opacity
+                target_opacity = 1.0 if ok else 0.5
+                effect = self.pw_icon_effects[i]
+                if effect.opacity() != target_opacity:
+                    anim = QPropertyAnimation(effect, b'opacity')
+                    anim.setDuration(200)
+                    anim.setStartValue(effect.opacity())
+                    anim.setEndValue(target_opacity)
+                    anim.start()
+                    self.pw_icon_animations[i] = anim  # Store to prevent GC
         self.encrypt_password.textChanged.connect(update_pw_icons)
 
         def update_confirm_icon():
@@ -362,6 +388,16 @@ class EntryptorApp(QMainWindow):
             confirm = self.encrypt_password_confirm.text()
             ok = pw and (pw == confirm)
             self.pw_confirm_icon.setPixmap(make_circle_icon(ok, "✓", 0.5 if not ok else 1.0).pixmap(24,24))
+            # Animate opacity
+            target_opacity = 1.0 if ok else 0.5
+            effect = self.pw_confirm_effect
+            if effect.opacity() != target_opacity:
+                anim = QPropertyAnimation(effect, b'opacity')
+                anim.setDuration(200)
+                anim.setStartValue(effect.opacity())
+                anim.setEndValue(target_opacity)
+                anim.start()
+                self.pw_confirm_animation = anim  # Store to prevent GC
         self.encrypt_password.textChanged.connect(update_confirm_icon)
         self.encrypt_password_confirm.textChanged.connect(update_confirm_icon)
 
