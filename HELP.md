@@ -27,6 +27,8 @@ Your password must meet these criteria:
 - At least one number
 - At least one special character
 
+There are requirements indicators when password is entered.
+
 ## Options
 
 ### File Extension Handling

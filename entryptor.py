@@ -4,9 +4,9 @@ import re
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
                             QGraphicsDropShadowEffect, QMessageBox, QComboBox, QCheckBox,
-                            QTextBrowser, QDialog)
+                            QTextBrowser, QDialog, QFrame)
 from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize
-from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor, QIcon, QFont
+from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor, QIcon, QFont, QPixmap, QPainter
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -65,10 +65,9 @@ class DropBox(QWidget):
         self.setAcceptDrops(True)
         self.setMinimumSize(300, 200)
         self.setStyleSheet("""
-            QWidget {
-                background-color: rgba(30, 30, 30, 0.7);
-                border-radius: 15px;
-            }
+            background-color: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(62, 62, 62, 0.5);
+            border-radius: 10px;
         """)
         
         # Add shadow effect
@@ -245,10 +244,126 @@ class EntryptorApp(QMainWindow):
         self.encrypt_button = QPushButton("Encrypt")
         self.encrypt_button.clicked.connect(self.encrypt_file)
         
+        # --- Password requirements icons ---
+        def make_circle_icon(met, symbol, opacity=0.5):
+            pixmap = QPixmap(24, 24)
+            pixmap.fill(QColor(0, 0, 0, 0))
+            painter = QPainter(pixmap)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            border_color = QColor("#218838") if met else QColor(128, 128, 128, int(255*opacity))
+            text_color = QColor("#218838") if met else QColor(128, 128, 128, int(255*opacity))
+            painter.setPen(border_color)
+            painter.setBrush(QColor(0, 0, 0, 0))  # Transparent fill
+            painter.drawEllipse(2, 2, 20, 20)
+            painter.setPen(text_color)
+            font = QFont("Helvetica Neue", 11, QFont.Weight.Normal)
+            if not font.exactMatch():
+                font = QFont("Arial", 11, QFont.Weight.Normal)
+            painter.setFont(font)
+            metrics = painter.fontMetrics()
+            text_width = metrics.horizontalAdvance(symbol)
+            text_height = metrics.height()
+            x = (pixmap.width() - text_width) // 2
+            y = (pixmap.height() + text_height) // 2 - metrics.descent()
+            painter.drawText(x, y, symbol)
+            painter.end()
+            return QIcon(pixmap)
+
+        # --- Password input container with icons inside ---
+        # Encryption password container
+        pw_container = QWidget()
+        pw_container.setStyleSheet("""
+            background-color: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(62, 62, 62, 0.5);
+            border-radius: 10px;
+        """)
+        pw_vlayout = QVBoxLayout(pw_container)
+        pw_vlayout.setContentsMargins(12, 8, 12, 8)
+        pw_vlayout.setSpacing(0)
+        self.encrypt_password.setMinimumHeight(28)
+        self.encrypt_password.setStyleSheet("background: transparent; border: none;")
+        pw_vlayout.addWidget(self.encrypt_password)
+        pw_vlayout.addSpacing(5)
+        pw_line = QFrame()
+        pw_line.setFrameShape(QFrame.Shape.HLine)
+        pw_line.setFrameShadow(QFrame.Shadow.Plain)
+        pw_line.setStyleSheet("background: #444; color: #444; min-height: 1px; max-height: 1px; border: none;")
+        pw_vlayout.addWidget(pw_line)
+        pw_vlayout.addSpacing(5)
+        pw_icon_row = QWidget()
+        pw_icon_row.setStyleSheet("background: transparent; border: none;")
+        pw_icon_layout = QHBoxLayout(pw_icon_row)
+        pw_icon_layout.setContentsMargins(0, 0, 0, 0)
+        pw_icon_layout.setSpacing(6)
+        self.pw_icon_labels = []
+        pw_reqs = [("len", "12"), ("up", "A"), ("low", "a"), ("num", "1"), ("spec", "#")]
+        for key, symbol in pw_reqs:
+            label = QLabel()
+            label.setPixmap(make_circle_icon(False, symbol).pixmap(24,24))
+            self.pw_icon_labels.append(label)
+            pw_icon_layout.addWidget(label)
+        pw_icon_layout.addStretch()
+        pw_vlayout.addWidget(pw_icon_row)
+
+        # Confirmation password container
+        confirm_container = QWidget()
+        confirm_container.setStyleSheet("""
+            background-color: rgba(30, 30, 30, 0.7);
+            border: 1px solid rgba(62, 62, 62, 0.5);
+            border-radius: 10px;
+        """)
+        confirm_vlayout = QVBoxLayout(confirm_container)
+        confirm_vlayout.setContentsMargins(12, 8, 12, 8)
+        confirm_vlayout.setSpacing(0)
+        self.encrypt_password_confirm.setMinimumHeight(28)
+        self.encrypt_password_confirm.setStyleSheet("background: transparent; border: none;")
+        confirm_vlayout.addWidget(self.encrypt_password_confirm)
+        confirm_vlayout.addSpacing(5)
+        confirm_line = QFrame()
+        confirm_line.setFrameShape(QFrame.Shape.HLine)
+        confirm_line.setFrameShadow(QFrame.Shadow.Plain)
+        confirm_line.setStyleSheet("background: #444; color: #444; min-height: 1px; max-height: 1px; border: none;")
+        confirm_vlayout.addWidget(confirm_line)
+        confirm_vlayout.addSpacing(5)
+        confirm_icon_row = QWidget()
+        confirm_icon_row.setStyleSheet("background: transparent; border: none;")
+        confirm_icon_layout = QHBoxLayout(confirm_icon_row)
+        confirm_icon_layout.setContentsMargins(0, 0, 0, 0)
+        confirm_icon_layout.setSpacing(6)
+        self.pw_confirm_icon = QLabel()
+        self.pw_confirm_icon.setPixmap(make_circle_icon(False, "✓").pixmap(24,24))
+        confirm_icon_layout.addWidget(self.pw_confirm_icon)
+        confirm_icon_layout.addStretch()
+        confirm_vlayout.addWidget(confirm_icon_row)
+
+        # Add widgets to left_layout
         left_layout.addWidget(self.encrypt_dropbox)
-        left_layout.addWidget(self.encrypt_password)
-        left_layout.addWidget(self.encrypt_password_confirm)
+        left_layout.addWidget(pw_container)
+        left_layout.addWidget(confirm_container)
         left_layout.addWidget(self.encrypt_button)
+
+        # Live update icons as user types
+        def update_pw_icons():
+            pw = self.encrypt_password.text()
+            checks = [
+                len(pw) >= 12,
+                any(c.isupper() for c in pw),
+                any(c.islower() for c in pw),
+                any(c.isdigit() for c in pw),
+                any(c in '!@#$%^&*(),.?":{}|<>' for c in pw)
+            ]
+            for i, ok in enumerate(checks):
+                symbol = pw_reqs[i][1]
+                self.pw_icon_labels[i].setPixmap(make_circle_icon(ok, symbol, 0.5 if not ok else 1.0).pixmap(24,24))
+        self.encrypt_password.textChanged.connect(update_pw_icons)
+
+        def update_confirm_icon():
+            pw = self.encrypt_password.text()
+            confirm = self.encrypt_password_confirm.text()
+            ok = pw and (pw == confirm)
+            self.pw_confirm_icon.setPixmap(make_circle_icon(ok, "✓", 0.5 if not ok else 1.0).pixmap(24,24))
+        self.encrypt_password.textChanged.connect(update_confirm_icon)
+        self.encrypt_password_confirm.textChanged.connect(update_confirm_icon)
 
         # Create right column (Decryption)
         right_column = QWidget()
@@ -287,6 +402,7 @@ class EntryptorApp(QMainWindow):
                 font-weight: bold;
                 font-size: 20px;
                 font-family: Arial;
+                qproperty-alignment: 'AlignCenter';
             }
             QPushButton:hover {
                 background-color: #606060;
@@ -297,11 +413,8 @@ class EntryptorApp(QMainWindow):
                 border: 2px solid #303030;
             }
         """)
-        help_shadow = QGraphicsDropShadowEffect()
-        help_shadow.setBlurRadius(15)
-        help_shadow.setColor(QColor(0, 0, 0, 100))
-        help_shadow.setOffset(0, 2)
-        help_button.setGraphicsEffect(help_shadow)
+        help_button.setStyleSheet(help_button.styleSheet())
+        help_button.setContentsMargins(0, 0, 0, 0)
         help_button.clicked.connect(self.show_help)
 
         # Settings button with gear icon
