@@ -22,6 +22,14 @@ VERSION = "1.0.0-beta"
 COPYRIGHT_YEAR = "2025"
 COMPANY_NAME = "Syntra for Business Solutions"
 
+# Gear icon helper function
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        # Running as bundled exe
+        return os.path.join(sys._MEIPASS, relative_path)
+    # Running as script
+    return os.path.join(os.path.abspath('.'), relative_path)
+
 def validate_password(password: str) -> tuple[bool, str]:
     """
     Validates password strength.
@@ -509,7 +517,8 @@ class EntryptorApp(QMainWindow):
         settings_shadow.setColor(QColor(0, 0, 0, 100))
         settings_shadow.setOffset(0, 2)
         settings_button.setGraphicsEffect(settings_shadow)
-        settings_button.setIcon(QIcon("gear.png"))
+        gear_icon = resource_path('gear.png')
+        settings_button.setIcon(QIcon(gear_icon))
         settings_button.setIconSize(QSize(20, 20))
         settings_button.clicked.connect(self.show_settings)
 
