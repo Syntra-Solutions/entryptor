@@ -136,16 +136,44 @@ class HelpDialog(QDialog):
         self.setLayout(layout)
 
 class SettingsDialog(QDialog):
-    def __init__(self, current_extension_option, parent=None):
+    def __init__(self, current_option, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
-        self.setMinimumSize(400, 250)
-        layout = QVBoxLayout()
+        
+        # Set wider default size
+        dialog_width = 600
+        dialog_height = 300
+        self.resize(dialog_width, dialog_height)
+        
+        # Center relative to parent (main window)
+        if parent:
+            parent_geometry = parent.geometry()
+            parent_center = QPointF(
+                parent_geometry.center().x(),
+                parent_geometry.center().y()
+            )
+            dialog_position = parent_center - QPointF(dialog_width / 2, dialog_height / 2)
+            self.move(dialog_position.toPoint())
+        
+        # Ensure dialog stays on top
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        
+        # Apply background color
+        self.setStyleSheet("""
+            QDialog, QWidget {
+                background-color: #2b2b2b;
+            }
+            QLabel {
+                color: #ffffff;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
 
         # Extension handling option
         self.extension_combo = QComboBox()
         self.extension_combo.addItems(["Preserve original extension (Less secure)", "Manual extension selection (More secure)"])
-        self.extension_combo.setCurrentText(current_extension_option)
+        self.extension_combo.setCurrentText(current_option)
         layout.addWidget(QLabel("Extension handling:"))
         layout.addWidget(self.extension_combo)
 
@@ -161,6 +189,24 @@ class SettingsDialog(QDialog):
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.accept)
         layout.addWidget(save_button)
+
+        # Button styling to match Encrypt/Decrypt buttons
+        save_button_style = """
+            QPushButton {
+                background-color: #2b2b2b;
+                color: #ffffff;
+                border: 1px solid #555555;
+                padding: 5px 15px;
+                border-radius: 3px;
+            }
+            QPushButton:hover {
+                background-color: #3c3c3c;
+            }
+            QPushButton:pressed {
+                background-color: #1e1e1e;
+            }
+        """
+        save_button.setStyleSheet(save_button_style)
 
         self.setLayout(layout)
 
@@ -618,8 +664,54 @@ class EntryptorApp(QMainWindow):
         if dlg.exec() == QDialog.DialogCode.Accepted:
             self.extension_preservation_option = dlg.get_extension_option()
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Main View")
+        self.setGeometry(100, 100, 800, 600)
+
+        # Set main view background color
+        self.background_color = "#f0f0f0"
+        self.setStyleSheet(f"""
+            QMainWindow {{
+                background-color: {self.background_color};
+            }}
+        """)
+
+        # Open settings window
+        settings_button = QPushButton("Open Settings")
+        settings_button.clicked.connect(self.open_settings)
+        layout = QVBoxLayout()
+        layout.addWidget(settings_button)
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def open_settings(self):
+        settings_window = SettingsWindow(self)
+        settings_window.exec()
+
+
+class SettingsWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Settings")
+        self.setGeometry(200, 200, 400, 300)
+
+        # Hardcode the background color to match the main view
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #f0f0f0; /* Same as Main View */
+            }
+        """)
+
+        # Example layout and content
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Settings"))
+        self.setLayout(layout)
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = EntryptorApp()
     window.show()
-    sys.exit(app.exec()) 
+    sys.exit(app.exec())
