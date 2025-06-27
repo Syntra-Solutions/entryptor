@@ -21,6 +21,7 @@
    - Test encryption with extension preservation disabled
    - Test decryption of files with preserved extensions
    - Test decryption of files without preserved extensions
+   - Test that extension preservation is disabled in keyfile mode
 
 4. **Drag and Drop Interface**
    - Test dragging single file to encryption area
@@ -28,10 +29,25 @@
    - Test dragging multiple files to encryption area
    - Test dragging multiple files to decryption area
    - Test dragging invalid files (non-existent, corrupted)
+   - Test dragging a keyfile to the keyfile drop zone (encryption)
+   - Test dragging a keyfile to the keyfile drop zone (decryption)
+   - Test that keyfile drop zones are only visible in keyfile mode
+
+### Keyfile Mode
+1. **Keyfile Encryption**
+   - Test toggling keyfile mode in settings dialog
+   - Test encrypting a file with a keyfile (no password required)
+   - Test error when encrypting without selecting a keyfile
+   - Test that extension preservation is disabled in keyfile mode
+
+2. **Keyfile Decryption**
+   - Test decrypting a file with the correct keyfile
+   - Test error when decrypting without selecting a keyfile
+   - Test error when using an incorrect or corrupted keyfile
 
 ### Password Management
 1. **Password Validation**
-   - Test password with minimum length (8 characters)
+   - Test password with minimum length (12 characters)
    - Test password with maximum length (128 characters)
    - Test password with all required character types
    - Test password missing required character types
@@ -55,6 +71,16 @@
    - Test progress bar during decryption
    - Test progress bar with large files
    - Test progress bar with multiple files
+
+3. **Settings Dialog**
+   - Test opening the settings dialog (gear icon)
+   - Test toggling between password and keyfile mode
+   - Test changing file extension handling option
+   - Test that UI updates immediately after changing settings
+
+4. **Help Dialog**
+   - Test opening the help dialog ("?" button)
+   - Test that help content matches current app features
 
 ### Password Requirements UI
 
@@ -98,7 +124,6 @@
    - Test clarity of success messages
    - Test accessibility of all controls
    - Test keyboard shortcuts (if any)
-
 2. **Documentation**
    - Test clarity of README instructions
    - Test completeness of installation guide
@@ -120,12 +145,14 @@
    - Test PBKDF2 key derivation
    - Test salt generation and usage
    - Test IV (Initialization Vector) generation
+   - Test keyfile-based encryption (keyfile mode)
 
 2. **Key Management**
    - Test secure key generation
    - Test secure key storage
    - Test secure key disposal
    - Test key derivation parameters
+   - Test secure handling of keyfiles
 
 ### Memory Security
 1. **Sensitive Data Handling**
@@ -142,8 +169,8 @@
 
 ### Input Validation
 1. **Password Security**
-   - Test password strength validation
-   - Test password length validation
+   - Test password strength validation (live feedback)
+   - Test password length validation (12+ chars)
    - Test password character validation
    - Test password entropy
 
@@ -152,6 +179,7 @@
    - Test file corruption detection
    - Test file size validation
    - Test file type validation
+   - Test keyfile validation (keyfile mode)
 
 ### Attack Prevention
 1. **Brute Force Protection**
@@ -182,4 +210,4 @@
 - Files with different extensions
 - Files with special characters in names
 - Corrupted files for negative testing
-- Large files for performance testing 
+- Large files for performance testing
