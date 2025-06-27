@@ -210,6 +210,17 @@ class SettingsDialog(QDialog):
 class EntryptorApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.use_keyfile = False
+        self.keyfile_dropbox = None
+        self.decrypt_keyfile_dropbox = None
+        self.keyfile_path = None
+        self.decrypt_keyfile_path = None
+        self.file_path = None
+        self.decrypt_file_path = None
+        self.extension_preservation_option = "Preserve original extension"
+        self.setup_ui()
+
+    def setup_ui(self):
         self.setWindowTitle(f"Entryptor v{VERSION}")
         self.setMinimumSize(800, 500)
         self.setStyleSheet("""
@@ -256,19 +267,6 @@ class EntryptorApp(QMainWindow):
                 background: transparent;
             }
         """)
-
-        self.use_keyfile = False
-        self.keyfile_dropbox = None
-        self.decrypt_keyfile_dropbox = None
-        self.keyfile_path = None
-        self.decrypt_keyfile_path = None
-
-        # Add to __init__
-        self.file_path = None
-        self.decrypt_file_path = None
-
-        # Add default setting
-        self.extension_preservation_option = "Preserve original extension"
 
         # Create central widget and main layout
         central_widget = QWidget()
@@ -547,6 +545,15 @@ class EntryptorApp(QMainWindow):
         # Add to setup_ui
         self.encrypt_dropbox.file_dropped.connect(self.handle_file_drop)
         self.decrypt_dropbox.file_dropped.connect(self.handle_decrypt_drop)
+
+    def reset_ui(self):
+        # Remove and delete the central widget (and all children)
+        old_central = self.centralWidget()
+        if old_central:
+            old_central.setParent(None)
+            old_central.deleteLater()
+        # Rebuild the UI without re-initializing the object
+        self.setup_ui()
 
     def handle_file_drop(self, file_path):
         # For encryption file
@@ -879,23 +886,51 @@ class EntryptorApp(QMainWindow):
             self.use_keyfile = dlg.get_keyfile_option()
             self.toggle_keyfile_mode()
 
+    def reset_ui(self):
+        # Remove and delete the central widget (and all children)
+        old_central = self.centralWidget()
+        if old_central:
+            old_central.setParent(None)
+            old_central.deleteLater()
+        # Rebuild the UI without re-initializing the object
+        self.setup_ui()
+
     def toggle_keyfile_mode(self):
         if self.use_keyfile:
-            # Hide password fields
-            self.encrypt_password.hide()
-            self.encrypt_password_confirm.hide()
-            self.decrypt_password.hide()
-            # Show keyfile dropboxes
+            # Hide password containers completely
+            pw_container = self.encrypt_password.parent()
+            confirm_container = self.encrypt_password_confirm.parent()
+            pw_container.setParent(None)
+            confirm_container.setParent(None)
+            self.decrypt_password.setParent(None)
+
+            # Get layouts
+            left_layout = self.encrypt_dropbox.parent().layout()
+            right_layout = self.decrypt_dropbox.parent().layout()
+
+            # Clear left layout while preserving widgets
+            while left_layout.count():
+                left_layout.takeAt(0)
+
+            # Clear right layout while preserving widgets
+            while right_layout.count():
+                right_layout.takeAt(0)
+
+            # Rebuild left column for keyfile mode
+            left_layout.addWidget(self.encrypt_dropbox)
+            left_layout.addWidget(self.keyfile_dropbox)
+            left_layout.addWidget(self.encrypt_button)
             self.keyfile_dropbox.show()
+
+            # Rebuild right column for keyfile mode
+            right_layout.addWidget(self.decrypt_dropbox)
+            right_layout.addWidget(self.decrypt_keyfile_dropbox)
+            right_layout.addWidget(self.decrypt_button)
             self.decrypt_keyfile_dropbox.show()
+
         else:
-            # Show password fields
-            self.encrypt_password.show()
-            self.encrypt_password_confirm.show()
-            self.decrypt_password.show()
-            # Hide keyfile dropboxes
-            self.keyfile_dropbox.hide()
-            self.decrypt_keyfile_dropbox.hide()
+            # Instead of trying to manually restore widgets, just reset the UI
+            self.reset_ui()
 
 class MainWindow(QMainWindow):
     def __init__(self):
