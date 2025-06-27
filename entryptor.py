@@ -4,8 +4,9 @@ import re
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
                             QGraphicsDropShadowEffect, QMessageBox, QComboBox, QCheckBox,
-                            QTextBrowser, QDialog, QFrame, QGraphicsOpacityEffect)
-from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize, QPropertyAnimation
+                            QTextBrowser, QDialog, QFrame, QGraphicsOpacityEffect,
+                            QDialogButtonBox)  # Add this
+from PyQt6.QtCore import Qt, QMimeData, QPointF, QUrl, QSize, QPropertyAnimation, pyqtSignal
 from PyQt6.QtGui import QDragEnterEvent, QDropEvent, QColor, QIcon, QFont, QPixmap, QPainter
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -68,6 +69,8 @@ class SecurePassword:
         gc.collect()
 
 class DropBox(QWidget):
+    file_dropped = pyqtSignal(str)
+
     def __init__(self, title, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
@@ -111,6 +114,10 @@ class DropBox(QWidget):
             self.file_path = files[0].toLocalFile()
             self.original_extension = os.path.splitext(self.file_path)[1]
             self.label.setText(os.path.basename(self.file_path))
+            self.file_dropped.emit(self.file_path)
+
+    def set_file_name(self, file_name):
+        self.label.setText(file_name)
 
 class HelpDialog(QDialog):
     def __init__(self, parent=None):
@@ -144,82 +151,61 @@ class HelpDialog(QDialog):
         self.setLayout(layout)
 
 class SettingsDialog(QDialog):
-    def __init__(self, current_option, parent=None):
+    def __init__(self, current_option, use_keyfile=False, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Settings")
+        self.setModal(True)
         
-        # Set wider default size
-        dialog_width = 600
-        dialog_height = 300
-        self.resize(dialog_width, dialog_height)
+        layout = QVBoxLayout()
         
-        # Center relative to parent (main window)
-        if parent:
-            parent_geometry = parent.geometry()
-            parent_center = QPointF(
-                parent_geometry.center().x(),
-                parent_geometry.center().y()
-            )
-            dialog_position = parent_center - QPointF(dialog_width / 2, dialog_height / 2)
-            self.move(dialog_position.toPoint())
-        
-        # Ensure dialog stays on top
-        self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        
-        # Apply background color
-        self.setStyleSheet("""
-            QDialog, QWidget {
-                background-color: #2b2b2b;
-            }
-            QLabel {
-                color: #ffffff;
-            }
-        """)
-
-        layout = QVBoxLayout(self)
-
-        # Extension handling option
+        # Extension combo
         self.extension_combo = QComboBox()
-        self.extension_combo.addItems(["Preserve original extension (Less secure)", "Manual extension selection (More secure)"])
+        self.extension_combo.addItems([
+            "Preserve original extension",
+            "Manual extension selection"
+        ])
         self.extension_combo.setCurrentText(current_option)
-        layout.addWidget(QLabel("Extension handling:"))
-        layout.addWidget(self.extension_combo)
-
-        # Spacer
-        layout.addStretch()
-
-        # Footer
-        copyright_label = QLabel(f"© {COPYRIGHT_YEAR} {COMPANY_NAME} v{VERSION}")
-        copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(copyright_label)
-
-        # Save button
-        save_button = QPushButton("Save")
-        save_button.clicked.connect(self.accept)
-        layout.addWidget(save_button)
-
-        # Button styling to match Encrypt/Decrypt buttons
-        save_button_style = """
-            QPushButton {
-                background-color: #2b2b2b;
-                color: #ffffff;
-                border: 1px solid #555555;
-                padding: 5px 15px;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #3c3c3c;
-            }
-            QPushButton:pressed {
-                background-color: #1e1e1e;
-            }
-        """
-        save_button.setStyleSheet(save_button_style)
-
+        
+        # Keyfile toggle
+        self.keyfile_toggle = QCheckBox("Use Keyfile instead of password")
+        self.keyfile_toggle.setChecked(use_keyfile)
+        
+        # Layout
+        ext_layout = QHBoxLayout()
+        ext_layout.addWidget(QLabel("File Extension:"))
+        ext_layout.addWidget(self.extension_combo)
+        layout.addLayout(ext_layout)
+        layout.addWidget(self.keyfile_toggle)
+        
+        # Connect toggle
+        self.keyfile_toggle.toggled.connect(self._on_keyfile_toggled)
+        self._on_keyfile_toggled(use_keyfile)
+        
+        # Buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | 
+            QDialogButtonBox.StandardButton.Cancel
+        )
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+        
         self.setLayout(layout)
+
+    def _on_keyfile_toggled(self, checked):
+        self.extension_combo.setEnabled(not checked)
+        if checked:
+            self.extension_combo.setCurrentText("Manual extension selection")
+        self.extension_combo.setStyleSheet("QComboBox:disabled { color: gray; }")
+        self.extension_combo.setToolTip(
+            "Extension preservation is not available in keyfile mode" if checked else ""
+        )
 
     def get_extension_option(self):
         return self.extension_combo.currentText()
+
+    def get_keyfile_option(self):
+        return self.keyfile_toggle.isChecked()
 
 class EntryptorApp(QMainWindow):
     def __init__(self):
@@ -270,6 +256,19 @@ class EntryptorApp(QMainWindow):
                 background: transparent;
             }
         """)
+
+        self.use_keyfile = False
+        self.keyfile_dropbox = None
+        self.decrypt_keyfile_dropbox = None
+        self.keyfile_path = None
+        self.decrypt_keyfile_path = None
+
+        # Add to __init__
+        self.file_path = None
+        self.decrypt_file_path = None
+
+        # Add default setting
+        self.extension_preservation_option = "Preserve original extension"
 
         # Create central widget and main layout
         central_widget = QWidget()
@@ -471,6 +470,16 @@ class EntryptorApp(QMainWindow):
         right_layout.addWidget(self.decrypt_password)
         right_layout.addWidget(self.decrypt_button)
 
+        # Create keyfile dropboxes (initially hidden)
+        self.keyfile_dropbox = DropBox("Drop keyfile here")
+        self.decrypt_keyfile_dropbox = DropBox("Drop keyfile here")
+        self.keyfile_dropbox.hide()
+        self.decrypt_keyfile_dropbox.hide()
+
+        # Add keyfile dropboxes to layouts after password fields
+        left_layout.addWidget(self.keyfile_dropbox)
+        right_layout.addWidget(self.decrypt_keyfile_dropbox)
+
         # Add columns to content layout
         content_layout.addWidget(left_column)
         content_layout.addWidget(right_column)
@@ -531,6 +540,32 @@ class EntryptorApp(QMainWindow):
         help_settings_layout.addWidget(settings_button)
         main_layout.addLayout(help_settings_layout)
 
+        # Connect keyfile drop signals
+        self.keyfile_dropbox.file_dropped.connect(self.handle_keyfile_drop)
+        self.decrypt_keyfile_dropbox.file_dropped.connect(self.handle_decrypt_keyfile_drop)
+
+        # Add to setup_ui
+        self.encrypt_dropbox.file_dropped.connect(self.handle_file_drop)
+        self.decrypt_dropbox.file_dropped.connect(self.handle_decrypt_drop)
+
+    def handle_file_drop(self, file_path):
+        # For encryption file
+        self.file_path = file_path
+        self.encrypt_dropbox.set_file_name(os.path.basename(file_path))
+
+    def handle_decrypt_drop(self, file_path):
+        # For decryption file
+        self.decrypt_file_path = file_path
+        self.decrypt_dropbox.set_file_name(os.path.basename(file_path))
+
+    def handle_keyfile_drop(self, file_path):
+        self.keyfile_path = file_path
+        self.keyfile_dropbox.set_file_name(os.path.basename(file_path))
+
+    def handle_decrypt_keyfile_drop(self, file_path):
+        self.decrypt_keyfile_path = file_path
+        self.decrypt_keyfile_dropbox.set_file_name(os.path.basename(file_path))
+
     def show_error(self, message):
         msg = QMessageBox(self)
         msg.setIcon(QMessageBox.Icon.Critical)
@@ -551,127 +586,316 @@ class EntryptorApp(QMainWindow):
         key = base64.urlsafe_b64encode(kdf.derive(password.get_bytes()))
         return key, salt
 
-    def encrypt_file(self):
-        if not self.encrypt_dropbox.file_path or not self.encrypt_password.text() or not self.encrypt_password_confirm.text():
-            return
-        if self.encrypt_password.text() != self.encrypt_password_confirm.text():
-            self.show_error("Passwords do not match.")
-            return
-        # Validate password strength
-        is_valid, error_message = validate_password(self.encrypt_password.text())
-        if not is_valid:
-            self.show_error(error_message)
-            return
-        try:
-            # Read the file
-            with open(self.encrypt_dropbox.file_path, 'rb') as f:
-                data = f.read()
-            # Create secure password wrapper
-            secure_password = SecurePassword(self.encrypt_password.text())
-            # Generate key and salt
-            key, salt = self.derive_key(secure_password)
-            f = Fernet(key)
-            # Encrypt the data
-            encrypted_data = f.encrypt(data)
-            # Create metadata
-            preserve_ext = getattr(self, 'extension_preservation_option', "Preserve original extension") == "Preserve original extension"
-            metadata = {
-                'preserve_extension': preserve_ext,
-                'original_extension': self.encrypt_dropbox.original_extension if preserve_ext else None
-            }
-            metadata_bytes = json.dumps(metadata).encode()
-            # Save the encrypted file
-            save_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Encrypted File", "", "Encrypted Files (*.enc)"
-            )
-            if save_path:
-                if not save_path.endswith('.enc'):
-                    save_path += '.enc'
-                with open(save_path, 'wb') as f:
-                    f.write(salt + len(metadata_bytes).to_bytes(4, 'big') + metadata_bytes + encrypted_data)
-                self.encrypt_dropbox.label.setText("Drop file to encrypt")
-                self.encrypt_dropbox.file_path = None
-                self.encrypt_dropbox.original_extension = None
-                self.encrypt_password.clear()
-                self.encrypt_password_confirm.clear()
-        except Exception as e:
-            self.show_error(f"Encryption error: {str(e)}")
-        finally:
-            # Ensure secure password is wiped
-            if 'secure_password' in locals():
-                del secure_password
-            gc.collect()
+    def create_metadata(self, original_path, preserve_extension):
+        """Create metadata for encrypted file"""
+        return {
+            "original_extension": os.path.splitext(original_path)[1] if preserve_extension else "",
+            "keyfile_mode": True
+        }
 
-    def decrypt_file(self):
-        if not self.decrypt_dropbox.file_path or not self.decrypt_password.text():
-            return
-            
-        # Validate password strength
-        is_valid, error_message = validate_password(self.decrypt_password.text())
-        if not is_valid:
-            self.show_error(error_message)
-            return
-            
-        try:
-            # Read the encrypted file
-            with open(self.decrypt_dropbox.file_path, 'rb') as f:
-                data = f.read()
-
-            # Extract salt, metadata length, metadata, and encrypted data
-            salt = data[:16]
-            metadata_length = int.from_bytes(data[16:20], 'big')
-            metadata = json.loads(data[20:20+metadata_length].decode())
-            encrypted_data = data[20+metadata_length:]
-
-            # Create secure password wrapper
-            secure_password = SecurePassword(self.decrypt_password.text())
-            
-            # Generate key
-            key, _ = self.derive_key(secure_password, salt)
-            f = Fernet(key)
-
-            # Decrypt the data
-            decrypted_data = f.decrypt(encrypted_data)
-
-            # Determine file extension
-            if metadata.get('preserve_extension', False):
-                original_extension = metadata.get('original_extension', '')
-                file_filter = f"All Files (*{original_extension})"
+    def get_save_path(self, source_path, is_encryption=True, metadata=None):
+        if is_encryption:
+            if self.use_keyfile:
+                suggested_name = os.path.splitext(source_path)[0] + '.enf'
+                file_filter = "Encrypted Files (*.enf)"
             else:
-                original_extension = ''
+                suggested_name = source_path + '.encrypted'
+                file_filter = "Encrypted Files (*.encrypted)"
+        else:
+            # Decryption
+            base_name = os.path.splitext(source_path)[0]
+            if metadata and metadata.get("preserve_extension", False):
+                original_extension = metadata.get("original_extension", "")
+                suggested_name = base_name + original_extension
+                file_filter = f"Original File (*{original_extension})"
+            else:
+                suggested_name = base_name
                 file_filter = "All Files (*.*)"
 
-            # Save the decrypted file
-            save_path, _ = QFileDialog.getSaveFileName(
-                self, "Save Decrypted File", "", file_filter
-            )
-            if save_path:
-                if metadata.get('preserve_extension', False) and not save_path.endswith(original_extension):
-                    save_path += original_extension
-                with open(save_path, 'wb') as f:
-                    f.write(decrypted_data)
-                self.decrypt_dropbox.label.setText("Drop file to decrypt")
-                self.decrypt_dropbox.file_path = None
-                self.decrypt_password.clear()
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "Save File",
+            suggested_name,
+            file_filter
+        )
 
-        except Exception:
-            self.show_error("Incorrect password or corrupted file.")
-        finally:
-            # Ensure secure password is wiped
-            if 'secure_password' in locals():
-                del secure_password
-            gc.collect()
+        # Force extension preservation if enabled
+        if file_path and not is_encryption and metadata and metadata.get("preserve_extension", False):
+            original_extension = metadata.get("original_extension", "")
+            if original_extension and not file_path.endswith(original_extension):
+                file_path += original_extension
+
+        return file_path
+
+    def encrypt_file(self):
+        if self.use_keyfile:
+            if not self.file_path or not self.keyfile_path:
+                QMessageBox.warning(self, "Error", "Please select both a file and a keyfile")
+                return
+            try:
+                # Debug print
+                print(f"Original file: {self.file_path}")
+                print(f"Extension preservation: {self.extension_preservation_option}")
+                
+                # Create metadata
+                metadata = {
+                    "original_extension": os.path.splitext(self.file_path)[1] if self.extension_preservation_option == "Preserve original extension" else "",
+                    "keyfile_mode": True,
+                    "preserve_extension": self.extension_preservation_option == "Preserve original extension"
+                }
+                
+                # Debug print
+                print(f"Metadata: {metadata}")
+                
+                # Get save location
+                save_path = self.get_save_path(self.file_path, is_encryption=True)
+                if not save_path:
+                    return
+
+                # Read keyfile and encrypt
+                with open(self.keyfile_path, 'rb') as kf:
+                    key_data = kf.read()
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=b'fixed_salt',
+                    iterations=100000,
+                    backend=default_backend()
+                )
+                key = base64.urlsafe_b64encode(kdf.derive(key_data))
+                fernet = Fernet(key)
+
+                # Read file content
+                with open(self.file_path, 'rb') as f:
+                    file_data = f.read()
+                
+                # Encode file data as base64
+                encoded_content = base64.b64encode(file_data).decode('utf-8')
+                
+                # Combine metadata and encoded content
+                combined_data = {
+                    'metadata': metadata,
+                    'content': encoded_content
+                }
+                
+                # Encrypt combined data
+                encrypted_data = fernet.encrypt(json.dumps(combined_data).encode())
+                
+                with open(save_path, 'wb') as f:
+                    f.write(encrypted_data)
+                
+                QMessageBox.information(self, "Success", "File encrypted successfully!")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Encryption failed: {str(e)}")
+        else:
+            if not self.encrypt_dropbox.file_path or not self.encrypt_password.text() or not self.encrypt_password_confirm.text():
+                return
+            if self.encrypt_password.text() != self.encrypt_password_confirm.text():
+                self.show_error("Passwords do not match.")
+                return
+            # Validate password strength
+            is_valid, error_message = validate_password(self.encrypt_password.text())
+            if not is_valid:
+                self.show_error(error_message)
+                return
+            try:
+                # Read the file
+                with open(self.encrypt_dropbox.file_path, 'rb') as f:
+                    data = f.read()
+                # Create secure password wrapper
+                secure_password = SecurePassword(self.encrypt_password.text())
+                # Generate key and salt
+                key, salt = self.derive_key(secure_password)
+                f = Fernet(key)
+                # Encrypt the data
+                encrypted_data = f.encrypt(data)
+                # Create metadata
+                metadata = {
+                    'preserve_extension': self.extension_preservation_option == "Preserve original extension",
+                    'original_extension': os.path.splitext(self.encrypt_dropbox.file_path)[1] if self.extension_preservation_option == "Preserve original extension" else ""
+                }
+                metadata_bytes = json.dumps(metadata).encode()
+                # Save the encrypted file
+                save_path, _ = QFileDialog.getSaveFileName(
+                    self, "Save Encrypted File", "", "Encrypted Files (*.enc)"
+                )
+                if save_path:
+                    if not save_path.endswith('.enc'):
+                        save_path += '.enc'
+                    with open(save_path, 'wb') as f:
+                        f.write(salt + len(metadata_bytes).to_bytes(4, 'big') + metadata_bytes + encrypted_data)
+                    self.encrypt_dropbox.label.setText("Drop file to encrypt")
+                    self.encrypt_dropbox.file_path = None
+                    self.encrypt_dropbox.original_extension = None
+                    self.encrypt_password.clear()
+                    self.encrypt_password_confirm.clear()
+            except Exception as e:
+                self.show_error(f"Encryption error: {str(e)}")
+            finally:
+                # Ensure secure password is wiped
+                if 'secure_password' in locals():
+                    del secure_password
+                gc.collect()
+
+    def decrypt_file(self):
+        if self.use_keyfile:
+            if not self.decrypt_file_path or not self.decrypt_keyfile_path:
+                QMessageBox.warning(self, "Error", "Please select both encrypted file and keyfile")
+                return
+            try:
+                print(f"Decrypting file: {self.decrypt_file_path}")
+                print(f"Extension preservation setting: {self.extension_preservation_option}")
+                
+                with open(self.decrypt_keyfile_path, 'rb') as kf:
+                    key_data = kf.read()
+                
+                kdf = PBKDF2HMAC(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=b'fixed_salt',
+                    iterations=100000,
+                    backend=default_backend()
+                )
+                key = base64.urlsafe_b64encode(kdf.derive(key_data))
+                fernet = Fernet(key)
+
+                with open(self.decrypt_file_path, 'rb') as f:
+                    encrypted_data = f.read()
+                
+                decrypted_json = fernet.decrypt(encrypted_data).decode('utf-8')
+                decrypted_data = json.loads(decrypted_json)
+                metadata = decrypted_data['metadata']
+                print(f"Decrypted metadata: {metadata}")
+                
+                content = base64.b64decode(decrypted_data['content'])
+
+                # Ensure extension preservation
+                base_name = os.path.splitext(self.decrypt_file_path)[0].replace('.enf', '')
+                original_extension = metadata.get("original_extension", "")
+                preserve_extension = metadata.get("preserve_extension", False)
+                
+                print(f"Base name: {base_name}")
+                print(f"Original extension: {original_extension}")
+                print(f"Preserve extension: {preserve_extension}")
+
+                if preserve_extension and original_extension:
+                    suggested_name = base_name + original_extension
+                    file_filter = f"Original File (*{original_extension})"
+                else:
+                    suggested_name = base_name
+                    file_filter = "All Files (*.*)"
+
+                save_path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "Save Decrypted File",
+                    suggested_name,
+                    file_filter
+                )
+
+                if save_path:
+                    # Force extension preservation
+                    if preserve_extension and original_extension:
+                        if not save_path.endswith(original_extension):
+                            save_path = save_path + original_extension
+                    
+                    print(f"Final save path: {save_path}")
+                    
+                    with open(save_path, 'wb') as f:
+                        f.write(content)
+                    
+                    QMessageBox.information(self, "Success", "File decrypted successfully!")
+
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Decryption failed: {str(e)}")
+        else:
+            if not self.decrypt_dropbox.file_path or not self.decrypt_password.text():
+                return
+                
+            # Validate password strength
+            is_valid, error_message = validate_password(self.decrypt_password.text())
+            if not is_valid:
+                self.show_error(error_message)
+                return
+                
+            try:
+                # Read the encrypted file
+                with open(self.decrypt_dropbox.file_path, 'rb') as f:
+                    data = f.read()
+
+                # Extract salt, metadata length, metadata, and encrypted data
+                salt = data[:16]
+                metadata_length = int.from_bytes(data[16:20], 'big')
+                metadata = json.loads(data[20:20+metadata_length].decode())
+                encrypted_data = data[20+metadata_length:]
+
+                # Create secure password wrapper
+                secure_password = SecurePassword(self.decrypt_password.text())
+                
+                # Generate key
+                key, _ = self.derive_key(secure_password, salt)
+                f = Fernet(key)
+
+                # Decrypt the data
+                decrypted_data = f.decrypt(encrypted_data)
+
+                # Determine file extension
+                if metadata.get('preserve_extension', False):
+                    original_extension = metadata.get('original_extension', '')
+                    file_filter = f"All Files (*{original_extension})"
+                else:
+                    original_extension = ''
+                    file_filter = "All Files (*.*)"
+
+                # Save the decrypted file
+                save_path, _ = QFileDialog.getSaveFileName(
+                    self, "Save Decrypted File", "", file_filter
+                )
+                if save_path:
+                    if metadata.get('preserve_extension', False) and not save_path.endswith(original_extension):
+                        save_path += original_extension
+                    with open(save_path, 'wb') as f:
+                        f.write(decrypted_data)
+                    self.decrypt_dropbox.label.setText("Drop file to decrypt")
+                    self.decrypt_dropbox.file_path = None
+                    self.decrypt_password.clear()
+
+            except Exception:
+                self.show_error("Incorrect password or corrupted file.")
+            finally:
+                # Ensure secure password is wiped
+                if 'secure_password' in locals():
+                    del secure_password
+                gc.collect()
 
     def show_help(self):
         help_dialog = HelpDialog(self)
         help_dialog.exec()
 
     def show_settings(self):
-        # Show the settings dialog and update extension handling if saved
-        current_option = getattr(self, 'extension_preservation_option', "Preserve original extension")
-        dlg = SettingsDialog(current_option, self)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
+        dlg = SettingsDialog(self.extension_preservation_option, self.use_keyfile, self)
+        result = dlg.exec()  # Use exec() instead of exec_()
+        if result == QDialog.DialogCode.Accepted:
             self.extension_preservation_option = dlg.get_extension_option()
+            self.use_keyfile = dlg.get_keyfile_option()
+            self.toggle_keyfile_mode()
+
+    def toggle_keyfile_mode(self):
+        if self.use_keyfile:
+            # Hide password fields
+            self.encrypt_password.hide()
+            self.encrypt_password_confirm.hide()
+            self.decrypt_password.hide()
+            # Show keyfile dropboxes
+            self.keyfile_dropbox.show()
+            self.decrypt_keyfile_dropbox.show()
+        else:
+            # Show password fields
+            self.encrypt_password.show()
+            self.encrypt_password_confirm.show()
+            self.decrypt_password.show()
+            # Hide keyfile dropboxes
+            self.keyfile_dropbox.hide()
+            self.decrypt_keyfile_dropbox.hide()
 
 class MainWindow(QMainWindow):
     def __init__(self):
