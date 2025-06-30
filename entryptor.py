@@ -17,11 +17,8 @@ import json
 import weakref
 import gc
 from PyQt6.QtWidgets import QStyle
-
-# Version information
-VERSION = "1.0.0-beta"
-COPYRIGHT_YEAR = "2025"
-COMPANY_NAME = "Syntra for Business Solutions"
+import ast
+from app_env import VERSION, COPYRIGHT_YEAR, APP_NAME, COMPANY_NAME
 
 # Gear icon helper function
 def resource_path(relative_path):
@@ -221,7 +218,8 @@ class EntryptorApp(QMainWindow):
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle(f"Entryptor v{VERSION}")
+        # Set window title dynamically from APP_NAME and VERSION
+        self.setWindowTitle(f"{APP_NAME} v{VERSION}")
         self.setMinimumSize(800, 500)
         self.setStyleSheet("""
             QMainWindow {
