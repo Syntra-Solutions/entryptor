@@ -4,12 +4,14 @@ A comprehensive framework for Context Engineering with GitHub Copilot - the disc
 
 > **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
 
+*This framework is optimized for GitHub Copilot and adapted from the original [Context Engineering Template](https://github.com/coleam00/Context-Engineering-Intro) by Cole Medin.*
+
 ## 🚀 Quick Start
 
 ```bash
 # 1. Clone this framework
-git clone https://github.com/coleam00/Context-Engineering-Intro.git
-cd Context-Engineering-Intro
+git clone https://github.com/x44ibn7/context-engineering-githubcopilot.git
+cd context-engineering-githubcopilot
 
 # 2. Set up your project rules
 # Edit COPILOT.md to add your project-specific guidelines
@@ -84,7 +86,7 @@ github-copilot-context-engineering/
 └── README.md                    # This file
 ```
 
-This template doesn't focus on RAG and tools with context engineering because I have a LOT more in store for that soon. ;)
+This template doesn't focus on RAG and tools with context engineering because this is specifically optimized for GitHub Copilot workflows.
 
 ## Step-by-Step Guide
 
@@ -278,5 +280,7 @@ examples/
 
 ## Resources
 
-- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
+- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
+- [GitHub Copilot Chat](https://docs.github.com/en/copilot/github-copilot-chat)
 - [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
+- [Original Context Engineering Framework](https://github.com/coleam00/Context-Engineering-Intro) by Cole Medin
