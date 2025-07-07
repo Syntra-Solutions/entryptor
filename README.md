@@ -1,286 +1,279 @@
-# GitHub Copilot Context Engineering Framework
+# Entryptor2 - Secure File Encryption Tool
 
-A comprehensive framework for Context Engineering with GitHub Copilot - the discipline of engineering context for AI coding assistants so they have the information necessary to get the job done end to end.
+A modern, secure file encryption application for macOS built with Python and PyQt6. Entryptor2 provides strong AES-256-GCM encryption with both password and keyfile authentication methods.
 
-> **Context Engineering is 10x better than prompt engineering and 100x better than vibe coding.**
+## Features
 
-*This framework is optimized for GitHub Copilot and adapted from the original [Context Engineering Template](https://github.com/coleam00/Context-Engineering-Intro) by Cole Medin.*
+- **Strong Security**: AES-256-GCM encryption with PBKDF2 key derivation
+- **Dual Authentication**: Support for both password and keyfile-based encryption
+- **Modern GUI**: Clean, intuitive interface built with PyQt6
+- **Drag & Drop**: Easy file selection with drag-and-drop functionality
+- **Secure Memory**: Automatic memory cleanup for sensitive data
+- **Cross-Platform**: Built for macOS with potential for Linux/Windows support
 
-## 🚀 Quick Start
+## Installation
 
+### Requirements
+
+- Python 3.9 or higher
+- macOS 10.14 or higher
+- 50MB of available disk space
+
+### Install from Source
+
+1. Clone the repository:
 ```bash
-# 1. Clone this framework
-git clone https://github.com/x44ibn7/context-engineering-githubcopilot.git
-cd context-engineering-githubcopilot
-
-# 2. Set up your project rules
-# Edit COPILOT.md to add your project-specific guidelines
-
-# 3. Add examples (critical for success!)
-# Place relevant code examples in the examples/ folder
-
-# 4. Create your feature request
-# Edit INITIAL.md with your feature requirements
-
-# 5. Use GitHub Copilot Chat with context
-# Copy prompts/copilot-generate-prp.md into Copilot Chat
-# Include your INITIAL.md content
-
-# 6. Implement with generated context
-# Use the comprehensive context in Copilot Chat
-# Follow the validation loops for quality
+git clone https://github.com/your-username/entryptor2.git
+cd entryptor2
 ```
 
-## 📚 Table of Contents
-
-- [What is Context Engineering?](#what-is-context-engineering)
-- [Template Structure](#template-structure)
-- [Step-by-Step Guide](#step-by-step-guide)
-- [Writing Effective INITIAL.md Files](#writing-effective-initialmd-files)
-- [The PRP Workflow](#the-prp-workflow)
-- [Using Examples Effectively](#using-examples-effectively)
-- [Best Practices](#best-practices)
-
-## What is Context Engineering?
-
-Context Engineering represents a paradigm shift from traditional prompt engineering:
-
-### GitHub Copilot vs Traditional Prompting
-
-**Traditional Prompting:**
-- Focuses on clever wording and specific phrasing
-- Limited to how you phrase a task
-- Like giving someone a sticky note
-
-**Context Engineering with GitHub Copilot:**
-- A complete system for providing comprehensive context
-- Includes documentation, examples, rules, patterns, and validation
-- Like writing a full screenplay with all the details
-- Leverages Copilot's codebase awareness with structured context
-
-### Why Context Engineering Matters
-
-1. **Reduces AI Failures**: Most agent failures aren't model failures - they're context failures
-2. **Ensures Consistency**: AI follows your project patterns and conventions
-3. **Enables Complex Features**: AI can handle multi-step implementations with proper context
-4. **Self-Correcting**: Validation loops allow AI to fix its own mistakes
-
-## Template Structure
-
-```
-github-copilot-context-engineering/
-├── prompts/
-│   ├── copilot-generate-prp.md   # GitHub Copilot prompt for generating PRPs
-│   ├── copilot-implement.md      # GitHub Copilot prompt for implementation
-│   └── copilot-validate.md       # GitHub Copilot prompt for validation
-├── PRPs/
-│   ├── templates/
-│   │   └── prp_base.md          # Base template for PRPs
-│   └── EXAMPLE_multi_agent_prp.md  # Example of a complete PRP
-├── examples/                     # Your code examples (critical!)
-├── COPILOT.md                   # Global rules for GitHub Copilot
-├── PLANNING.md                  # Project architecture & patterns
-├── TASK.md                      # Current work tracking
-├── INITIAL.md                   # Template for feature requests
-├── INITIAL_EXAMPLE.md           # Example feature request
-└── README.md                    # This file
+2. Create a virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On macOS/Linux
 ```
 
-This template doesn't focus on RAG and tools with context engineering because this is specifically optimized for GitHub Copilot workflows.
-
-## Step-by-Step Guide
-
-### 1. Set Up Global Rules (COPILOT.md)
-
-The `COPILOT.md` file contains project-wide rules that GitHub Copilot will follow in every conversation. The template includes:
-
-- **Project awareness**: Reading planning docs, checking tasks
-- **Code structure**: File size limits, module organization  
-- **Testing requirements**: Unit test patterns, coverage expectations
-- **Style conventions**: Language preferences, formatting rules
-- **Documentation standards**: Docstring formats, commenting practices
-- **GitHub Copilot workflow**: Specific tips for working with Copilot Chat
-
-**You can use the provided template as-is or customize it for your project.**
-
-### 2. Create Your Initial Feature Request
-
-Edit `INITIAL.md` to describe what you want to build:
-
-```markdown
-## FEATURE:
-[Describe what you want to build - be specific about functionality and requirements]
-
-## EXAMPLES:
-[List any example files in the examples/ folder and explain how they should be used]
-
-## DOCUMENTATION:
-[Include links to relevant documentation, APIs, or external resources]
-
-## OTHER CONSIDERATIONS:
-[Mention any gotchas, specific requirements, or things AI assistants commonly miss]
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
 ```
 
-**See `INITIAL_EXAMPLE.md` for a complete example.**
-
-### 3. Generate the PRP with GitHub Copilot
-
-PRPs (Product Requirements Prompts) are comprehensive implementation blueprints that include:
-
-- Complete context and documentation
-- Implementation steps with validation
-- Error handling patterns
-- Test requirements
-
-Use the structured prompt from `prompts/copilot-generate-prp.md` in GitHub Copilot Chat:
-
-1. **Copy the prompt template** from `prompts/copilot-generate-prp.md`
-2. **Paste your feature request** from `INITIAL.md` into the template
-3. **Send to GitHub Copilot Chat** - Copilot will read your project files
-4. **Review and save** the generated PRP to `PRPs/your-feature-name.md`
-
-### 4. Implement with GitHub Copilot
-
-Once generated, use the implementation prompt to build your feature:
-
-1. **Use the prompt template** from `prompts/copilot-implement.md`
-2. **Include your generated PRP** in the template
-3. **Send to GitHub Copilot Chat** for step-by-step implementation
-4. **Follow the validation loop** - implement, test, fix, repeat
-5. **Run quality gates** after each step until all pass
-
-## Writing Effective INITIAL.md Files
-
-### Key Sections Explained
-
-**FEATURE**: Be specific and comprehensive
-- ❌ "Build a web scraper"
-- ✅ "Build an async web scraper using BeautifulSoup that extracts product data from e-commerce sites, handles rate limiting, and stores results in PostgreSQL"
-
-**EXAMPLES**: Leverage the examples/ folder
-- Place relevant code patterns in `examples/`
-- Reference specific files and patterns to follow
-- Explain what aspects should be mimicked
-
-**DOCUMENTATION**: Include all relevant resources
-- API documentation URLs
-- Library guides
-- MCP server documentation
-- Database schemas
-
-**OTHER CONSIDERATIONS**: Capture important details
-- Authentication requirements
-- Rate limits or quotas
-- Common pitfalls
-- Performance requirements
-
-## The GitHub Copilot Workflow
-
-### How PRP Generation Works
-
-The structured prompt follows this process:
-
-1. **Context Analysis**
-   - GitHub Copilot reads your `PLANNING.md`, `COPILOT.md`, and `TASK.md`
-   - Analyzes your codebase patterns from `examples/`
-   - Understands your project structure and conventions
-
-2. **Feature Research**
-   - Searches for similar implementations online
-   - References relevant documentation
-   - Identifies common patterns and pitfalls
-
-3. **Blueprint Creation**
-   - Creates step-by-step implementation plan
-   - Includes validation gates and quality checks
-   - Adds comprehensive context for successful implementation
-
-4. **Quality Assessment**
-   - Scores confidence level (1-10) for implementation success
-   - Ensures all necessary context is included
-
-### How Implementation Works
-
-1. **Load Context**: Copilot reads the entire PRP
-2. **Plan**: Creates detailed task breakdown  
-3. **Execute**: Implements each component following patterns
-4. **Validate**: Runs quality gates after each step
-5. **Iterate**: Fixes any issues found during validation
-6. **Complete**: Ensures all requirements met
-
-See `PRPs/EXAMPLE_multi_agent_prp.md` for a complete example of what gets generated.
-
-## Using Examples Effectively
-
-The `examples/` folder is **critical** for success. AI coding assistants perform much better when they can see patterns to follow.
-
-### What to Include in Examples
-
-1. **Code Structure Patterns**
-   - How you organize modules
-   - Import conventions
-   - Class/function patterns
-
-2. **Testing Patterns**
-   - Test file structure
-   - Mocking approaches
-   - Assertion styles
-
-3. **Integration Patterns**
-   - API client implementations
-   - Database connections
-   - Authentication flows
-
-4. **CLI Patterns**
-   - Argument parsing
-   - Output formatting
-   - Error handling
-
-### Example Structure
-
-```
-examples/
-├── README.md           # Explains what each example demonstrates
-├── cli.py             # CLI implementation pattern
-├── agent/             # Agent architecture patterns
-│   ├── agent.py      # Agent creation pattern
-│   ├── tools.py      # Tool implementation pattern
-│   └── providers.py  # Multi-provider pattern
-└── tests/            # Testing patterns
-    ├── test_agent.py # Unit test patterns
-    └── conftest.py   # Pytest configuration
+4. Run the application:
+```bash
+python -m src.main
 ```
 
-## Best Practices
+## Usage
 
-### 1. Be Explicit in INITIAL.md
-- Don't assume the AI knows your preferences
-- Include specific requirements and constraints
-- Reference examples liberally
+### Basic Encryption
 
-### 2. Provide Comprehensive Examples
-- More examples = better implementations
-- Show both what to do AND what not to do
-- Include error handling patterns
+1. **Launch Entryptor2**
+   ```bash
+   python -m src.main
+   ```
 
-### 3. Use Validation Gates
-- PRPs include test commands that must pass
-- AI will iterate until all validations succeed
-- This ensures working code on first try
+2. **Select Encryption Mode**
+   - Choose between "Password" and "Keyfile" modes
+   - Password mode: Uses a password you provide
+   - Keyfile mode: Uses a file as the encryption key
 
-### 4. Leverage Documentation
-- Include official API docs
-- Add MCP server resources
-- Reference specific documentation sections
+3. **Add Files**
+   - Drag and drop files onto the encryption area
+   - Or use the file browser to select files
 
-### 5. Customize COPILOT.md
-- Add your conventions
-- Include project-specific rules
-- Define coding standards
+4. **Set Password/Keyfile**
+   - For password mode: Enter a strong password (12+ characters)
+   - For keyfile mode: Select a keyfile (minimum 64 bytes)
 
-## Resources
+5. **Encrypt**
+   - Click "Encrypt File" to create the encrypted version
+   - Encrypted files have a `.encrypted` extension
 
-- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
-- [GitHub Copilot Chat](https://docs.github.com/en/copilot/github-copilot-chat)
-- [Context Engineering Best Practices](https://www.philschmid.de/context-engineering)
-- [Original Context Engineering Framework](https://github.com/coleam00/Context-Engineering-Intro) by Cole Medin
+### Basic Decryption
+
+1. **Switch to Decrypt Mode**
+   - Use the mode toggle in the interface
+
+2. **Add Encrypted File**
+   - Drag and drop the `.encrypted` file
+
+3. **Enter Password/Keyfile**
+   - Provide the same password or keyfile used for encryption
+
+4. **Decrypt**
+   - Click "Decrypt File" to restore the original file
+
+### Advanced Features
+
+#### Password Strength Validation
+- Minimum 12 characters
+- Must contain uppercase, lowercase, numbers, and symbols
+- Real-time strength indicator
+
+#### Keyfile Requirements
+- Minimum 64 bytes in size
+- Can be any file type (image, document, etc.)
+- Keep keyfiles secure and backed up
+
+#### Security Features
+- Automatic memory cleanup for passwords and keys
+- Secure random salt generation
+- File integrity verification
+- Error handling for corrupted files
+
+## Security Architecture
+
+### Encryption Details
+- **Algorithm**: AES-256-GCM (Galois/Counter Mode)
+- **Key Derivation**: PBKDF2 with 100,000 iterations
+- **Salt**: 16 bytes of cryptographically secure random data
+- **Nonce**: 12 bytes of random data for each encryption
+
+### File Format
+Encrypted files contain:
+1. File header with metadata
+2. Salt for key derivation
+3. Nonce for encryption
+4. Encrypted file data
+5. Authentication tag
+
+### Memory Security
+- Passwords are stored in secure memory objects
+- Automatic cleanup on object destruction
+- Memory overwriting for sensitive data
+
+## Configuration
+
+Settings are stored in `~/Library/Application Support/Entryptor/settings.json` on macOS.
+
+### Available Settings
+```json
+{
+  "encryption_mode": "password",
+  "extension_option": "add",
+  "remember_settings": true,
+  "auto_delete_originals": false,
+  "show_advanced_options": false
+}
+```
+
+## Development
+
+### Running Tests
+```bash
+# Run all tests
+python -m pytest
+
+# Run specific test modules
+python -m pytest tests/test_crypto/
+python -m pytest tests/test_utils/
+
+# Run with coverage
+python -m pytest --cov=src/
+```
+
+### Code Quality
+```bash
+# Style checking
+python -m ruff check src/ tests/
+
+# Type checking
+python -m mypy src/
+
+# Auto-format code
+python -m ruff format src/ tests/
+```
+
+### Project Structure
+```
+entryptor2/
+├── src/
+│   ├── main.py              # Application entry point
+│   ├── crypto/              # Encryption/decryption modules
+│   ├── gui/                 # PyQt6 GUI components
+│   ├── utils/               # Utility functions
+│   └── config/              # Configuration management
+├── tests/                   # Unit and integration tests
+├── examples/                # Example applications
+└── requirements.txt         # Python dependencies
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### "Module not found" errors
+Make sure you're in the project directory and the virtual environment is activated:
+```bash
+source .venv/bin/activate
+export PYTHONPATH=$(pwd)
+```
+
+#### PyQt6 import errors
+Try reinstalling PyQt6:
+```bash
+pip uninstall PyQt6
+pip install PyQt6==6.7.0
+```
+
+#### Permission errors
+Ensure the application has read/write permissions for the files you're trying to encrypt/decrypt.
+
+#### Memory errors with large files
+Large files are processed in chunks. If you encounter memory issues, try:
+- Closing other applications
+- Encrypting smaller files
+- Increasing available system memory
+
+### Performance Tips
+
+- **Large Files**: Files over 1GB may take several minutes to encrypt/decrypt
+- **SSD Storage**: Use SSD storage for better performance
+- **Memory**: Ensure at least 1GB of available RAM for large files
+
+## Security Considerations
+
+### Password Security
+- Use unique, strong passwords for each encrypted file
+- Consider using a password manager
+- Never share passwords over insecure channels
+
+### Keyfile Security
+- Store keyfiles separately from encrypted files
+- Back up keyfiles securely
+- Use unique keyfiles for different files
+
+### File Handling
+- Securely delete original files after encryption if needed
+- Verify encrypted files before deleting originals
+- Keep backups of important data
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
+
+### Development Setup
+```bash
+# Clone your fork
+git clone https://github.com/your-username/entryptor2.git
+cd entryptor2
+
+# Create development environment
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest
+
+# Check code quality
+python -m ruff check src/ tests/
+python -m mypy src/
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with [PyQt6](https://www.riverbankcomputing.com/software/pyqt/) for the GUI
+- Uses [cryptography](https://cryptography.io/) library for encryption
+- Inspired by modern security practices and user experience design
+
+## Support
+
+For issues, questions, or contributions:
+- Open an issue on GitHub
+- Check the troubleshooting section
+- Review the examples in the `examples/` directory
+
+---
+
+**⚠️ Important Security Note**: This software is provided as-is. While it uses industry-standard encryption, please ensure you understand the security implications and have backups of your data before use.

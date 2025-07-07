@@ -57,3 +57,21 @@ logs/
 
 # Dependencies
 node_modules/
+
+# AI Generation Framework & Development Files
+PRPs/
+prompts/
+TASK.md
+INITIAL.md
+INITIAL1.md
+PLANNING.md
+COPILOT.md
+QUICK-REFERENCE.md
+examples/
+scripts/
+README_GHFRAMEWORK.md
+
+# Test coverage reports
+htmlcov/
+.coverage
+.pytest_cache/
