@@ -31,7 +31,7 @@ stages:
         Python312:
           python.version: '3.12'
     steps:
-    - template: templates/test-steps.yml
+    - template: pipelines/templates/test-steps.yml
       parameters:
         pythonVersion: '$(python.version)'
 
@@ -51,7 +51,7 @@ stages:
     pool:
       vmImage: $(imageName)
     steps:
-    - template: templates/test-steps.yml
+    - template: pipelines/templates/test-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
         platform: $(displayName)
@@ -80,7 +80,7 @@ stages:
     pool:
       vmImage: $(imageName)
     steps:
-    - template: templates/build-steps.yml
+    - template: pipelines/templates/build-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
         platform: $(displayName)
@@ -96,6 +96,6 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    - template: templates/package-steps.yml
+    - template: pipelines/templates/package-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
