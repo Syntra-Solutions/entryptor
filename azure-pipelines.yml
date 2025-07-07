@@ -14,31 +14,77 @@ stages:
 - stage: Test
   displayName: 'Test Stage'
   jobs:
-  - job: TestPython311
-    displayName: 'Test Python 3.11 (Primary)'
+  - job: TestMultiplePython
+    displayName: 'Test on Multiple Python Versions (Linux)'
     pool:
       vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        Python38:
+          python.version: '3.8'
+        Python39:
+          python.version: '3.9'
+        Python310:
+          python.version: '3.10'
+        Python311:
+          python.version: '3.11'
+        Python312:
+          python.version: '3.12'
     steps:
     - template: pipelines/templates/test-steps.yml
       parameters:
-        pythonVersion: '3.11'
-        platform: 'Linux'
+        pythonVersion: '$(python.version)'
+
+  - job: TestCrossPlatform
+    displayName: 'Test Cross-Platform'
+    strategy:
+      matrix:
+        Linux:
+          imageName: 'ubuntu-latest'
+          displayName: 'Linux'
+        macOS:
+          imageName: 'macOS-latest'
+          displayName: 'macOS'
+        Windows:
+          imageName: 'windows-latest'
+          displayName: 'Windows'
+    pool:
+      vmImage: $(imageName)
+    steps:
+    - template: pipelines/templates/test-steps.yml
+      parameters:
+        pythonVersion: $(pythonVersion)
+        platform: $(displayName)
 
 - stage: Build
   displayName: 'Build Stage'
   dependsOn: Test
   condition: succeeded()
   jobs:
-  - job: BuildLinux
-    displayName: 'Build Linux Application'
+  - job: BuildArtifacts
+    displayName: 'Build Application Artifacts'
+    strategy:
+      matrix:
+        Linux:
+          imageName: 'ubuntu-latest'
+          artifactName: 'entryptor-linux'
+          displayName: 'Linux'
+        macOS:
+          imageName: 'macOS-latest'
+          artifactName: 'entryptor-macos'
+          displayName: 'macOS'
+        Windows:
+          imageName: 'windows-latest'
+          artifactName: 'entryptor-windows'
+          displayName: 'Windows'
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: $(imageName)
     steps:
     - template: pipelines/templates/build-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
-        platform: 'Linux'
-        artifactName: 'entryptor-linux'
+        platform: $(displayName)
+        artifactName: $(artifactName)
 
 - stage: Package
   displayName: 'Package Stage'
