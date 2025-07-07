@@ -1,0 +1,101 @@
+# Entryptor CI/CD Pipeline
+# Build, test, and package Python application for multiple platforms
+
+trigger:
+- main
+
+pr:
+- main
+
+variables:
+  pythonVersion: '3.11'
+
+stages:
+- stage: Test
+  displayName: 'Test Stage'
+  jobs:
+  - job: TestMultiplePython
+    displayName: 'Test on Multiple Python Versions (Linux)'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        Python38:
+          python.version: '3.8'
+        Python39:
+          python.version: '3.9'
+        Python310:
+          python.version: '3.10'
+        Python311:
+          python.version: '3.11'
+        Python312:
+          python.version: '3.12'
+    steps:
+    - template: templates/test-steps.yml
+      parameters:
+        pythonVersion: '$(python.version)'
+
+  - job: TestCrossPlatform
+    displayName: 'Test Cross-Platform'
+    strategy:
+      matrix:
+        Linux:
+          imageName: 'ubuntu-latest'
+          displayName: 'Linux'
+        macOS:
+          imageName: 'macOS-latest'
+          displayName: 'macOS'
+        Windows:
+          imageName: 'windows-latest'
+          displayName: 'Windows'
+    pool:
+      vmImage: $(imageName)
+    steps:
+    - template: templates/test-steps.yml
+      parameters:
+        pythonVersion: $(pythonVersion)
+        platform: $(displayName)
+
+- stage: Build
+  displayName: 'Build Stage'
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: BuildArtifacts
+    displayName: 'Build Application Artifacts'
+    strategy:
+      matrix:
+        Linux:
+          imageName: 'ubuntu-latest'
+          artifactName: 'entryptor-linux'
+          displayName: 'Linux'
+        macOS:
+          imageName: 'macOS-latest'
+          artifactName: 'entryptor-macos'
+          displayName: 'macOS'
+        Windows:
+          imageName: 'windows-latest'
+          artifactName: 'entryptor-windows'
+          displayName: 'Windows'
+    pool:
+      vmImage: $(imageName)
+    steps:
+    - template: templates/build-steps.yml
+      parameters:
+        pythonVersion: $(pythonVersion)
+        platform: $(displayName)
+        artifactName: $(artifactName)
+
+- stage: Package
+  displayName: 'Package Stage'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - job: CreateRelease
+    displayName: 'Create Release Package'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - template: templates/package-steps.yml
+      parameters:
+        pythonVersion: $(pythonVersion)

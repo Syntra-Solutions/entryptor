@@ -1,12 +1,12 @@
-# Entryptor2 Help Guide
+# Entryptor Help Guide
 
 ## Overview
 
-Entryptor2 is a secure file encryption and decryption application for macOS that provides strong AES-256-GCM encryption with support for both password-based and keyfile-based authentication. The application features a modern, intuitive drag-and-drop interface designed for ease of use while maintaining the highest security standards.
+Entryptor is a secure file encryption and decryption application for macOS that provides strong AES-256-GCM encryption with support for both password-based and keyfile-based authentication. The application features a modern, intuitive drag-and-drop interface designed for ease of use while maintaining the highest security standards.
 
 ## Quick Start
 
-### 1. Launch Entryptor2
+### 1. Launch Entryptor
 ```bash
 python -m src.main
 ```
@@ -200,7 +200,7 @@ Access settings via the **Settings** button (⚙️):
 4. **Organization**: Maintain clear naming and organization for encrypted files
 
 ### System Security
-1. **Keep updated**: Regularly update Entryptor2 and your operating system
+1. **Keep updated**: Regularly update Entryptor and your operating system
 2. **Secure environment**: Use encryption in a secure, malware-free environment
 3. **Physical security**: Secure your computer when not in use
 4. **Network safety**: Avoid encryption/decryption over untrusted networks
@@ -247,7 +247,7 @@ Encrypted files contain:
 - **Issue reporting**: Report bugs or request features through GitHub
 
 ### Updates
-- **Check regularly**: Keep Entryptor2 updated for latest security features
+- **Check regularly**: Keep Entryptor updated for latest security features
 - **Release notes**: Review release notes for new features and security improvements
 - **Backward compatibility**: Newer versions can decrypt files from older versions
 

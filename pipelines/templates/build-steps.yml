@@ -1,0 +1,104 @@
+# Build Steps Template
+# Build Entryptor application for different platforms
+
+parameters:
+- name: pythonVersion
+  type: string
+  default: '3.11'
+- name: platform
+  type: string
+  default: 'Linux'
+- name: artifactName
+  type: string
+  default: 'entryptor'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '${{ parameters.pythonVersion }}'
+  displayName: 'Use Python ${{ parameters.pythonVersion }}'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install pyinstaller
+  displayName: 'Install dependencies and PyInstaller'
+
+# Linux Build
+- script: |
+    pyinstaller --onefile --windowed \
+      --name Entryptor \
+      --add-data "src:src" \
+      --hidden-import PyQt6.QtCore \
+      --hidden-import PyQt6.QtGui \
+      --hidden-import PyQt6.QtWidgets \
+      --hidden-import cryptography \
+      src/main.py
+  displayName: 'Build Linux Application'
+  condition: eq('${{ parameters.platform }}', 'Linux')
+
+# macOS Build
+- script: |
+    pyinstaller --onefile --windowed \
+      --name Entryptor \
+      --add-data "src:src" \
+      --hidden-import PyQt6.QtCore \
+      --hidden-import PyQt6.QtGui \
+      --hidden-import PyQt6.QtWidgets \
+      --hidden-import cryptography \
+      --icon=src/resources/entryptor.icns \
+      src/main.py
+  displayName: 'Build macOS Application'
+  condition: eq('${{ parameters.platform }}', 'macOS')
+
+# Windows Build
+- script: |
+    pyinstaller --onefile --windowed ^
+      --name Entryptor ^
+      --add-data "src;src" ^
+      --hidden-import PyQt6.QtCore ^
+      --hidden-import PyQt6.QtGui ^
+      --hidden-import PyQt6.QtWidgets ^
+      --hidden-import cryptography ^
+      src/main.py
+  displayName: 'Build Windows Application'
+  condition: eq('${{ parameters.platform }}', 'Windows')
+
+# Create distribution directory
+- script: |
+    mkdir -p dist-artifacts
+    cp -r dist/* dist-artifacts/ 2>/dev/null || :
+    cp README.md dist-artifacts/ 2>/dev/null || :
+    cp HELP.md dist-artifacts/ 2>/dev/null || :
+    cp LICENSE dist-artifacts/ 2>/dev/null || :
+  displayName: 'Prepare Distribution (Linux/macOS)'
+  condition: ne('${{ parameters.platform }}', 'Windows')
+
+- script: |
+    mkdir dist-artifacts
+    copy dist\* dist-artifacts\ 2>nul
+    copy README.md dist-artifacts\ 2>nul
+    copy HELP.md dist-artifacts\ 2>nul
+    copy LICENSE dist-artifacts\ 2>nul
+  displayName: 'Prepare Distribution (Windows)'
+  condition: eq('${{ parameters.platform }}', 'Windows')
+
+# Test the built application
+- script: |
+    ls -la dist-artifacts/
+    file dist-artifacts/Entryptor 2>/dev/null || file dist-artifacts/Entryptor.exe 2>/dev/null || echo "Binary not found"
+  displayName: 'Verify Build Output'
+  condition: ne('${{ parameters.platform }}', 'Windows')
+
+- script: |
+    dir dist-artifacts\
+  displayName: 'Verify Build Output (Windows)'
+  condition: eq('${{ parameters.platform }}', 'Windows')
+
+# Publish build artifacts
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: 'dist-artifacts'
+    artifactName: '${{ parameters.artifactName }}'
+    publishLocation: 'Container'
+  displayName: 'Publish Build Artifacts'
