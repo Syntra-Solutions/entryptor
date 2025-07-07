@@ -1,0 +1,129 @@
+# Package Steps Template
+# Create release packages and handle deployment
+
+parameters:
+- name: pythonVersion
+  type: string
+  default: '3.11'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '${{ parameters.pythonVersion }}'
+  displayName: 'Use Python ${{ parameters.pythonVersion }}'
+
+# Download all build artifacts
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: 'current'
+    downloadType: 'specific'
+    downloadPath: '$(System.ArtifactsDirectory)'
+  displayName: 'Download Build Artifacts'
+
+# Create release package
+- script: |
+    mkdir -p release-package
+    cd release-package
+    
+    # Create version info
+    echo "Entryptor v1.0.0" > VERSION.txt
+    echo "Build Date: $(date)" >> VERSION.txt
+    echo "Build ID: $(Build.BuildId)" >> VERSION.txt
+    echo "Commit: $(Build.SourceVersion)" >> VERSION.txt
+    
+    # Copy platform binaries
+    mkdir -p binaries/linux binaries/macos binaries/windows
+    
+    # Copy Linux build
+    if [ -d "$(System.ArtifactsDirectory)/entryptor-linux" ]; then
+      cp -r $(System.ArtifactsDirectory)/entryptor-linux/* binaries/linux/
+    fi
+    
+    # Copy macOS build
+    if [ -d "$(System.ArtifactsDirectory)/entryptor-macos" ]; then
+      cp -r $(System.ArtifactsDirectory)/entryptor-macos/* binaries/macos/
+    fi
+    
+    # Copy Windows build
+    if [ -d "$(System.ArtifactsDirectory)/entryptor-windows" ]; then
+      cp -r $(System.ArtifactsDirectory)/entryptor-windows/* binaries/windows/
+    fi
+    
+    # Create platform-specific archives
+    if [ -f "binaries/linux/Entryptor" ]; then
+      cd binaries/linux && tar -czf ../../entryptor-v1.0.0-linux.tar.gz * && cd ../..
+    fi
+    
+    if [ -f "binaries/macos/Entryptor" ]; then
+      cd binaries/macos && tar -czf ../../entryptor-v1.0.0-macos.tar.gz * && cd ../..
+    fi
+    
+    if [ -f "binaries/windows/Entryptor.exe" ]; then
+      cd binaries/windows && zip -r ../../entryptor-v1.0.0-windows.zip * && cd ../..
+    fi
+    
+    # List created files
+    ls -la
+  displayName: 'Create Release Package'
+
+# Create source distribution
+- script: |
+    python -m pip install --upgrade pip build
+    python -m build
+  displayName: 'Create Source Distribution'
+
+# Copy source dist to release package
+- script: |
+    cp dist/*.tar.gz release-package/ 2>/dev/null || :
+    cp dist/*.whl release-package/ 2>/dev/null || :
+  displayName: 'Add Source Distribution to Release'
+
+# Generate checksums
+- script: |
+    cd release-package
+    sha256sum *.tar.gz *.zip *.whl 2>/dev/null > checksums.sha256 || :
+    cat checksums.sha256
+  displayName: 'Generate Checksums'
+
+# Publish final release artifacts
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: 'release-package'
+    artifactName: 'entryptor-release'
+    publishLocation: 'Container'
+  displayName: 'Publish Release Package'
+
+# Create GitHub-style release notes
+- script: |
+    cd release-package
+    cat > RELEASE_NOTES.md << 'EOF'
+    # Entryptor v1.0.0 Release
+    
+    ## Features
+    - 🔐 Secure file encryption/decryption with AES-256-GCM
+    - 🎨 Modern PyQt6 GUI with drag-and-drop support
+    - 📁 Dual drop zones for input/output files
+    - 🔑 Password and key file authentication
+    - ❌ File deselection with minimalistic close buttons
+    - 🖼️ Subtle, visible drop zone borders
+    - ✅ Cross-platform support (Windows, macOS, Linux)
+    
+    ## Downloads
+    - **Linux**: `entryptor-v1.0.0-linux.tar.gz`
+    - **macOS**: `entryptor-v1.0.0-macos.tar.gz`
+    - **Windows**: `entryptor-v1.0.0-windows.zip`
+    - **Source**: `entryptor-*.tar.gz` / `entryptor-*.whl`
+    
+    ## Verification
+    Use `checksums.sha256` to verify download integrity.
+    
+    ## Requirements
+    - Python 3.8+ (for source installation)
+    - No additional requirements for binary distributions
+    
+    Build Information:
+    - Build ID: $(Build.BuildId)
+    - Commit: $(Build.SourceVersion)
+    - Date: $(date)
+    EOF
+  displayName: 'Generate Release Notes'

@@ -1,0 +1,63 @@
+# Test Steps Template
+# Reusable steps for testing Entryptor across platforms
+
+parameters:
+- name: pythonVersion
+  type: string
+  default: '3.11'
+- name: platform
+  type: string
+  default: 'Linux'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '${{ parameters.pythonVersion }}'
+  displayName: 'Use Python ${{ parameters.pythonVersion }}'
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+  displayName: 'Install dependencies'
+
+- script: |
+    python -m ruff check src/ tests/
+  displayName: 'Run Ruff Linting'
+  continueOnError: false
+
+- script: |
+    python -m mypy src/
+  displayName: 'Run MyPy Type Checking'
+  continueOnError: false
+
+- script: |
+    python -m pytest tests/ -v --tb=short --junitxml=test-results.xml --cov=src --cov-report=xml --cov-report=html
+  displayName: 'Run Tests with Coverage'
+  continueOnError: false
+
+- task: PublishTestResults@2
+  condition: always()
+  inputs:
+    testResultsFiles: 'test-results.xml'
+    testRunTitle: 'Python ${{ parameters.pythonVersion }} - ${{ parameters.platform }}'
+    failTaskOnFailedTests: true
+  displayName: 'Publish Test Results'
+
+- task: PublishCodeCoverageResults@2
+  condition: always()
+  inputs:
+    summaryFileLocation: 'coverage.xml'
+    reportDirectory: 'htmlcov'
+    codecoverageTool: 'Cobertura'
+  displayName: 'Publish Code Coverage'
+
+- script: |
+    python -c "import src.main; print('Import test passed')"
+  displayName: 'Test Application Import'
+  condition: and(succeeded(), ne('${{ parameters.platform }}', 'Windows'))
+
+- script: |
+    python -c "import src.main; print('Import test passed')"
+  displayName: 'Test Application Import (Windows)'
+  condition: and(succeeded(), eq('${{ parameters.platform }}', 'Windows'))
