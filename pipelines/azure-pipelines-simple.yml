@@ -1,0 +1,190 @@
+# Entryptor Simple CI/CD Pipeline
+# Single-file pipeline for testing and building across platforms
+
+trigger:
+- main
+- 1.0.0
+
+pr:
+- main
+- 1.0.0
+
+variables:
+  pythonVersion: '3.11'
+
+stages:
+- stage: Test
+  displayName: 'Test and Lint'
+  jobs:
+  - job: TestMultiplePython
+    displayName: 'Test Multiple Python Versions'
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      matrix:
+        Python38:
+          python.version: '3.8'
+        Python39:
+          python.version: '3.9'
+        Python310:
+          python.version: '3.10'
+        Python311:
+          python.version: '3.11'
+        Python312:
+          python.version: '3.12'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+      displayName: 'Install dependencies'
+
+    - script: |
+        python -m ruff check src/ tests/
+      displayName: 'Run Ruff Linting'
+
+    - script: |
+        python -m mypy src/
+      displayName: 'Run MyPy Type Checking'
+
+    - script: |
+        python -m pytest tests/ -v --tb=short --junitxml=test-results-$(python.version).xml --cov=src --cov-report=xml
+      displayName: 'Run Tests with Coverage'
+
+    - task: PublishTestResults@2
+      condition: always()
+      inputs:
+        testResultsFiles: 'test-results-$(python.version).xml'
+        testRunTitle: 'Python $(python.version) Tests'
+        failTaskOnFailedTests: true
+      displayName: 'Publish Test Results'
+
+  - job: TestCrossPlatform
+    displayName: 'Cross-Platform Testing'
+    strategy:
+      matrix:
+        Linux:
+          imageName: 'ubuntu-latest'
+        macOS:
+          imageName: 'macOS-latest'
+        Windows:
+          imageName: 'windows-latest'
+    pool:
+      vmImage: $(imageName)
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+      displayName: 'Install dependencies'
+
+    - script: |
+        python -m pytest tests/ -v --tb=short
+      displayName: 'Run Core Tests'
+
+- stage: Build
+  displayName: 'Build Applications'
+  dependsOn: Test
+  condition: succeeded()
+  jobs:
+  - job: BuildLinux
+    displayName: 'Build Linux'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+      displayName: 'Install dependencies'
+
+    - script: |
+        pyinstaller --onefile --windowed \
+          --name Entryptor \
+          --add-data "src:src" \
+          --hidden-import PyQt6.QtCore \
+          --hidden-import PyQt6.QtGui \
+          --hidden-import PyQt6.QtWidgets \
+          --hidden-import cryptography \
+          src/main.py
+      displayName: 'Build Linux Application'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: 'dist'
+        artifactName: 'entryptor-linux'
+      displayName: 'Publish Linux Artifacts'
+
+  - job: BuildMacOS
+    displayName: 'Build macOS'
+    pool:
+      vmImage: 'macOS-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+      displayName: 'Install dependencies'
+
+    - script: |
+        pyinstaller --onefile --windowed \
+          --name Entryptor \
+          --add-data "src:src" \
+          --hidden-import PyQt6.QtCore \
+          --hidden-import PyQt6.QtGui \
+          --hidden-import PyQt6.QtWidgets \
+          --hidden-import cryptography \
+          src/main.py
+      displayName: 'Build macOS Application'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: 'dist'
+        artifactName: 'entryptor-macos'
+      displayName: 'Publish macOS Artifacts'
+
+  - job: BuildWindows
+    displayName: 'Build Windows'
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+      displayName: 'Install dependencies'
+
+    - script: |
+        pyinstaller --onefile --windowed --name Entryptor --add-data "src;src" --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets --hidden-import cryptography src/main.py
+      displayName: 'Build Windows Application'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: 'dist'
+        artifactName: 'entryptor-windows'
+      displayName: 'Publish Windows Artifacts'

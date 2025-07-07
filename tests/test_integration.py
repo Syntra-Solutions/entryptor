@@ -1,4 +1,4 @@
-"""Integration tests for Entryptor2."""
+"""Integration tests for Entryptor."""
 
 import os
 import tempfile
