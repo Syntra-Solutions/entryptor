@@ -3,11 +3,9 @@
 
 trigger:
 - main
-- 1.0.0
 
 pr:
 - main
-- 1.0.0
 
 variables:
   pythonVersion: '3.11'

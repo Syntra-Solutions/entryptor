@@ -3,11 +3,9 @@
 
 trigger:
 - main
-- 1.0.0
 
 pr:
 - main
-- 1.0.0
 
 variables:
   pythonVersion: '3.11'
@@ -91,7 +89,7 @@ stages:
 - stage: Package
   displayName: 'Package Stage'
   dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/1.0.0'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
   jobs:
   - job: CreateRelease
     displayName: 'Create Release Package'
