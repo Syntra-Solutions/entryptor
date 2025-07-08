@@ -88,7 +88,7 @@ def get_help_file_path() -> Optional[str]:
     root_help_path = get_resource_path("HELP.md")
     if os.path.exists(root_help_path):
         return root_help_path
-    
+
     # Look for help file in resources
     help_path = get_resource_path("resources/HELP.md")
     if os.path.exists(help_path):

@@ -15,10 +15,10 @@ from ..config.constants import SALT_SIZE, PBKDF2_ITERATIONS
 def generate_salt(length: int = SALT_SIZE) -> bytes:
     """
     Generate a random salt for key derivation.
-    
+
     Args:
         length: Length of salt in bytes (default: SALT_SIZE)
-        
+
     Returns:
         Random salt bytes
     """
