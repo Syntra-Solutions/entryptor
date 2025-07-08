@@ -1,1 +1,1 @@
-"""Cryptography utilities for Entryptor2."""
+"""Cryptography utilities for Entryptor."""

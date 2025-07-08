@@ -1,1 +1,1 @@
-"""Test suite for Entryptor2."""
+"""Test suite for Entryptor."""

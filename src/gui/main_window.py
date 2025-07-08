@@ -1,4 +1,4 @@
-"""Main application window for Entryptor2."""
+"""Main application window for Entryptor."""
 
 from typing import Optional
 

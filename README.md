@@ -1,6 +1,6 @@
 # Entryptor - Secure File Encryption Tool
 
-A modern, secure file encryption application for macOS built with Python and PyQt6. Entryptor2 provides strong AES-256-GCM encryption with both password and keyfile authentication methods.
+A modern, secure file encryption application for macOS built with Python and PyQt6. Entryptor provides strong AES-256-GCM encryption with both password and keyfile authentication methods.
 
 ## Features
 
@@ -47,7 +47,7 @@ python -m src.main
 
 ### Basic Encryption
 
-1. **Launch Entryptor2**
+1. **Launch Entryptor**
    ```bash
    python -m src.main
    ```

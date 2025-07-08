@@ -1,4 +1,4 @@
-"""Application constants for Entryptor2."""
+"""Application constants for Entryptor."""
 
 VERSION = "2.0.0"
 COPYRIGHT_YEAR = "2025"

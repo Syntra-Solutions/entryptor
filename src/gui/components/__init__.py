@@ -1,1 +1,1 @@
-"""GUI components for Entryptor2."""
+"""GUI components for Entryptor."""

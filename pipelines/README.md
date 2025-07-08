@@ -16,6 +16,7 @@ This directory contains Azure DevOps pipeline configurations for building, testi
 
 **Triggers:**
 - `main` branch
+- `1.0.0` release branch
 - Pull requests
 
 ### 2. `azure-pipelines-simple.yml` (Quick Setup)
@@ -77,7 +78,7 @@ Release packaging:
 - **Artifacts**: Published for download/deployment
 
 ### 📦 Package Stage (Advanced only)
-- **Release Creation**: Only runs on `main` branch
+- **Release Creation**: Only runs on `1.0.0` branch
 - **Multi-Platform Archives**: Creates distribution packages
 - **Source Distribution**: Python package (wheel/sdist)
 - **Release Notes**: Auto-generated documentation
@@ -115,7 +116,8 @@ The pipeline expects these files in your repository:
 
 ### 3. Branch Policies
 Consider setting up branch policies for:
-- `main` branch: Require pipeline success + approvals
+- `main` branch: Require pipeline success
+- `1.0.0` branch: Require pipeline success + approvals
 
 ## Artifacts
 

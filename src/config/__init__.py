@@ -1,1 +1,1 @@
-"""Configuration management for Entryptor2."""
+"""Configuration management for Entryptor."""
