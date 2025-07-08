@@ -114,26 +114,36 @@ jobs:
     - name: Install platform-specific dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        # macOS-specific setup if needed
-        echo "macOS setup complete"
+        # Set up headless environment for GUI tests on macOS
+        export QT_QPA_PLATFORM=offscreen
+        echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+        echo "macOS headless GUI setup complete"
     
     - name: Install platform-specific dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
-        # Windows-specific setup if needed
-        echo "Windows setup complete"
+        # Set up headless environment for GUI tests on Windows  
+        echo "QT_QPA_PLATFORM=offscreen" >> $env:GITHUB_ENV
+        echo "Windows headless GUI setup complete"
     
     - name: Run tests with platform display (Linux)
       if: matrix.os == 'ubuntu-latest'
+      env:
+        DISPLAY: :99
+        QT_QPA_PLATFORM: offscreen
+        CI: true
       run: |
         echo "Running tests on ${{ matrix.platform }}"
-        xvfb-run -a pytest tests/ -v --tb=short --disable-warnings -x
+        xvfb-run -a pytest tests/ -v --tb=short --disable-warnings
     
     - name: Run tests (macOS/Windows)
       if: matrix.os != 'ubuntu-latest'
+      env:
+        QT_QPA_PLATFORM: offscreen
+        CI: true
       run: |
         echo "Running tests on ${{ matrix.platform }}"
-        pytest tests/ -v --tb=short --disable-warnings -x
+        pytest tests/ -v --tb=short --disable-warnings
 
   # Build Stage - Artifacts for each platform
   build-artifacts:

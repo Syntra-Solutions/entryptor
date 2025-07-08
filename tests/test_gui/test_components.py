@@ -1,5 +1,6 @@
 """Tests for GUI components."""
 
+import os
 import pytest
 from unittest.mock import Mock, patch
 
@@ -13,6 +14,10 @@ from src.gui.components.dialogs import show_error_dialog, show_info_dialog
 @pytest.fixture
 def app():
     """Create QApplication instance for GUI tests."""
+    # Set up headless mode for CI
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
     app = QApplication.instance()
     if app is None:
         app = QApplication([])
