@@ -47,9 +47,8 @@ Release packaging:
 ## Setup Instructions
 
 ### Option 1: Quick Setup (Recommended)
-1. Copy `azure-pipelines-simple.yml` to your repository root
-2. Rename it to `azure-pipelines.yml`
-3. Configure Azure DevOps to use this pipeline
+1. Copy `azure-pipelines.yml` to your repository root
+2. Configure Azure DevOps to use this pipeline
 
 ### Option 2: Advanced Setup
 1. Copy the entire `Pipelines` folder to your repository

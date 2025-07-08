@@ -60,12 +60,6 @@ STAGING (development)
   └── Comprehensive validation
 ```
 
-STAGING (development)
-  ├── Simple CI pipeline
-  ├── Ubuntu + Python 3.11
-  └── Build validation
-```
-
 ## Artifact Management
 
 ### Build Artifacts
