@@ -1,4 +1,4 @@
-"""Main application entry point for Entryptor2."""
+"""Main application entry point for Entryptor."""
 
 import sys
 import os

@@ -1,1 +1,1 @@
-"""Utility functions for Entryptor2."""
+"""Utility functions for Entryptor."""

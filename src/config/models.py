@@ -1,4 +1,4 @@
-"""Data models for Entryptor2."""
+"""Data models for Entryptor."""
 
 from dataclasses import dataclass
 from enum import Enum
