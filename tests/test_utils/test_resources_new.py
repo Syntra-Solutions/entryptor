@@ -113,6 +113,7 @@ class TestResourceUtils:
     def test_pyinstaller_bundle_mode(self):
         """Test resource path in PyInstaller bundle mode."""
         with patch("sys._MEIPASS", "/bundle/path", create=True):
-            with patch("hasattr", return_value=True):
+            with patch("builtins.hasattr") as mock_hasattr:
+                mock_hasattr.return_value = True
                 result = get_resource_path("test_file.txt")
                 assert result == "/bundle/path/test_file.txt"
