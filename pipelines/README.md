@@ -4,7 +4,7 @@ This directory contains Azure DevOps pipeline configurations for building, testi
 
 ## Pipeline Files
 
-### 1. `azure-pipelines.yml` (Advanced)
+### `azure-pipelines.yml` - Comprehensive CI/CD Pipeline
 **Multi-stage pipeline with templates**
 - ✅ Multi-platform testing (Linux, macOS, Windows)
 - ✅ Multiple Python versions (3.8-3.12)
@@ -16,17 +16,9 @@ This directory contains Azure DevOps pipeline configurations for building, testi
 
 **Triggers:**
 - `main` branch
-- `1.0.0` release branch
 - Pull requests
 
-### 2. `azure-pipelines-simple.yml` (Quick Setup)
-**Single-file pipeline for easy deployment**
-- ✅ Essential testing and building
-- ✅ Cross-platform support
-- ✅ Simplified configuration
-- ✅ Good for getting started quickly
-
-## Templates (Advanced Pipeline)
+## Templates (Pipeline Structure)
 
 ### `templates/test-steps.yml`
 Reusable testing steps including:

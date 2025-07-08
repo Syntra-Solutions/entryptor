@@ -1,7 +1,6 @@
 # Entryptor - Secure File Encryption Tool
 
 [![CI/CD Pipeline](https://github.com/Syntra-Solutions/entryptor/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Syntra-Solutions/entryptor/actions/workflows/ci-cd.yml)
-[![Simple CI](https://github.com/Syntra-Solutions/entryptor/actions/workflows/simple-ci.yml/badge.svg)](https://github.com/Syntra-Solutions/entryptor/actions/workflows/simple-ci.yml)
 [![Azure DevOps Build](https://dev.azure.com/syntrasoftware/Entryptor/_apis/build/status/azure-pipelines?branchName=main)](https://dev.azure.com/syntrasoftware/Entryptor/_build/latest?definitionId=1&branchName=main)
 
 A modern, secure file encryption application for macOS built with Python and PyQt6. Entryptor provides strong AES-256-GCM encryption with both password and keyfile authentication methods.

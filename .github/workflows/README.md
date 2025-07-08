@@ -2,11 +2,11 @@
 
 ## Overview
 
-This repository includes three GitHub Actions workflows that mirror our Azure DevOps pipeline structure, providing comprehensive CI/CD capabilities for the Entryptor application.
+This repository includes a comprehensive GitHub Actions workflow that mirrors our Azure DevOps pipeline structure, providing full CI/CD capabilities for the Entryptor application.
 
 ## Workflow Files
 
-### 1. `ci-cd.yml` - Full CI/CD Pipeline
+### `ci-cd.yml` - Comprehensive CI/CD Pipeline
 **Triggers**: Push to `main` or `STAGING`, PRs to `main`
 
 **Features**:
@@ -21,70 +21,44 @@ This repository includes three GitHub Actions workflows that mirror our Azure De
 2. **Test Cross-Platform** (All OS + Python 3.11)
 3. **Build Artifacts** (All platforms, depends on tests)
 4. **Create Release** (Ubuntu, main branch only)
-
-### 2. `simple-ci.yml` - Development Pipeline
-**Triggers**: Push to `STAGING`, PRs to `main`/`STAGING`
-
-**Features**:
-- **Quick Feedback**: Focuses on Python 3.11 + Ubuntu
-- **Essential Tests**: Core unit tests + integration tests
 - **Code Quality**: ruff, mypy validation
-- **Build Validation**: Tests PyInstaller build process on main
-
-**Use Case**: Development workflow, faster feedback loop
-
-### 3. `minimal-ci.yml` - Ultra-Fast Validation
-**Triggers**: Manual trigger, changes to source/test files
-
-**Features**:
-- **Lightning Fast**: Style check + type check + smoke test
-- **Minimal Dependencies**: Only installs essential packages
-- **Import Validation**: Ensures core modules can be imported
-
-**Use Case**: Quick validation during active development
-
 ## Pipeline Comparison
 
-| Feature | Azure DevOps | GitHub Actions Full | GitHub Actions Simple | GitHub Actions Minimal |
-|---------|---------------|---------------------|----------------------|------------------------|
-| Multi-Python Testing | ✅ | ✅ | ❌ | ❌ |
-| Cross-Platform Testing | ✅ | ✅ | ❌ | ❌ |
-| Build Artifacts | ✅ | ✅ | Main only | ❌ |
-| Code Quality Checks | ✅ | ✅ | ✅ | ✅ |
-| GUI Testing Support | ✅ | ✅ | ✅ | ❌ |
-| Execution Time | ~15-20 min | ~15-20 min | ~5-8 min | ~1-2 min |
+| Feature | Azure DevOps | GitHub Actions |
+|---------|---------------|----------------|
+| Multi-Python Testing | ✅ | ✅ |
+| Cross-Platform Testing | ✅ | ✅ |
+| Build Artifacts | ✅ | ✅ |
+| Code Quality Checks | ✅ | ✅ |
+| GUI Testing Support | ✅ | ✅ |
+| Execution Time | ~15-20 min | ~15-20 min |
 
-## Workflow Selection Guide
+## Workflow Usage
 
-### When to Use Each Workflow
-
-#### Full CI/CD (`ci-cd.yml`)
+### CI/CD Pipeline (`ci-cd.yml`)
+**Ideal for:**
 - **Production releases** to main branch
-- **Comprehensive validation** before major merges
+- **Feature development** on STAGING branch
+- **Pull request validation**
+- **Comprehensive validation** before merges
 - **Multi-platform compatibility** verification
 - **Release candidate** preparation
 
-#### Simple CI (`simple-ci.yml`)
-- **Feature development** on STAGING branch
-- **Pull request validation**
-- **Daily development** workflow
-- **Quick quality assurance**
-
-#### Minimal CI (`minimal-ci.yml`)
-- **Active development** with frequent commits
-- **Syntax/style validation**
-- **Import verification**
-- **Pre-commit checks**
-
 ## Branch Strategy Integration
 
-Our GitHub Actions workflows integrate with the branch strategy:
+Our GitHub Actions workflow integrates with the branch strategy:
 
 ```
 main (production)
   ├── Full CI/CD pipeline
   ├── All platforms + Python versions
   └── Release artifact creation
+
+STAGING (development)
+  ├── Full CI/CD pipeline
+  ├── All platforms + Python versions
+  └── Comprehensive validation
+```
 
 STAGING (development)
   ├── Simple CI pipeline
@@ -174,7 +148,6 @@ dist/
 Add to README.md:
 ```markdown
 [![CI/CD Pipeline](https://github.com/Syntra-Solutions/entryptor/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Syntra-Solutions/entryptor/actions/workflows/ci-cd.yml)
-[![Simple CI](https://github.com/Syntra-Solutions/entryptor/actions/workflows/simple-ci.yml/badge.svg)](https://github.com/Syntra-Solutions/entryptor/actions/workflows/simple-ci.yml)
 ```
 
 ### Failure Notifications
