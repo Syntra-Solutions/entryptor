@@ -28,6 +28,9 @@
 - [x] Task 19: Temporarily skip GUI tests in CI due to PyQt6 compatibility - Added: 2025-07-09 - Priority: Medium - Estimate: 1 hour - Completed: 2025-07-09
 - [x] Task 20: Fix missing pydantic dependency in CI verification - Added: 2025-07-09 - Priority: Low - Estimate: 15 minutes - Completed: 2025-07-09
 - [x] Task 21: Update deprecated GitHub Actions versions - Added: 2025-07-09 - Priority: High - Estimate: 30 minutes - Completed: 2025-07-09
+- [x] Task 22: Document GitHub Actions gotchas and PyQt6 CI issues - Added: 2025-07-09 - Priority: Low - Estimate: 15 minutes - Completed: 2025-07-09
+- [x] Task 23: Enhance CI/CD to create macOS .app bundle - Added: 2025-07-09 - Priority: Medium - Estimate: 1-2 hours - Completed: 2025-07-09
+- [x] Task 24: Add comprehensive macOS security documentation - Added: 2025-07-09 - Priority: High - Estimate: 1 hour - Completed: 2025-07-09
 
 ### Medium Priority
 - [ ] Performance optimization - Added: 2025-07-07
@@ -78,6 +81,18 @@
   - Removed Linux and Windows build configurations
   - Simplified pipeline structure and reduced build time
   - Verified successful macOS builds and deployments
+- [x] **Task 23: Enhanced CI/CD with macOS .app bundle** - Added: 2025-07-09 - Completed: 2025-07-09
+  - Updated CI/CD pipeline to create proper macOS .app bundle
+  - Added quarantine attribute removal for local testing
+  - Enhanced build artifact packaging with tar.gz format
+  - Improved build summary with detailed user instructions
+  - Added verification steps for executable creation
+- [x] **Task 24: Comprehensive macOS Security Documentation** - Added: 2025-07-09 - Completed: 2025-07-09
+  - Created detailed `docs/MACOS_SECURITY_SETUP.md` with step-by-step instructions
+  - Added macOS security section to README.md
+  - Enhanced CI/CD build summary with security warnings and solutions
+  - Added macOS security gotchas to developer documentation
+  - Provided multiple methods for bypassing Gatekeeper restrictions
 
 ## Discovered During Work
 

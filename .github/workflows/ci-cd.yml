@@ -7,10 +7,32 @@ on:
   push:
     branches: [ main, STAGING ]
   pull_request:
-    branches: [ main ]
-
-env:
-  PYTHON_VERSION: '3.11'
+    branches: [ mai    - name: Verify executable creation
+      run: |
+        echo "=== Build Output ==="
+        ls -la dist/
+        echo "=== App Bundle Info ==="
+        if [ -d "dist/Entryptor.app" ]; then
+          echo "App bundle structure:"
+          find dist/Entryptor.app -name "Entryptor" -type f | head -5
+          file dist/Entryptor.app/Contents/MacOS/Entryptor 2>/dev/null || echo "Executable location varies"
+        else
+          echo "No .app bundle found, checking for executable"
+          file dist/Entryptor 2>/dev/null || echo "Executable not found"
+        fi
+    
+    - name: Package macOS artifacts
+      run: |
+        cd dist
+        # Create a DMG-style zip with the .app bundle
+        if [ -d "Entryptor.app" ]; then
+          echo "Packaging .app bundle"
+          tar -czf entryptor-macos.tar.gz Entryptor.app/
+        else
+          echo "Packaging executable directory"
+          tar -czf entryptor-macos.tar.gz Entryptor/
+        fi
+        echo "Package created: $(ls -la entryptor-macos.tar.gz)"THON_VERSION: '3.11'
 
 jobs:
   # Test Stage - Multiple Python Versions on macOS
@@ -169,18 +191,56 @@ jobs:
           --hidden-import PyQt6.QtGui \
           --hidden-import PyQt6.QtWidgets \
           --hidden-import cryptography \
+          --osx-bundle-identifier com.syntrasoftware.entryptor \
           src/main.py
+    
+    - name: Create proper macOS app structure
+      run: |
+        echo "Creating proper .app bundle structure"
+        cd dist
+        # Rename to proper .app extension if not already
+        if [ -d "Entryptor" ] && [ ! -d "Entryptor.app" ]; then
+          mv Entryptor Entryptor.app
+        fi
+        
+        # Verify app structure
+        ls -la Entryptor.app/
+        echo "App bundle created successfully"
+    
+    - name: Remove quarantine attributes (for local testing)
+      run: |
+        echo "Removing quarantine attributes from the app bundle"
+        cd dist
+        # Remove quarantine attribute that macOS adds to downloaded files
+        xattr -cr Entryptor.app || echo "No quarantine attributes found"
+        
+        # List remaining attributes
+        xattr -l Entryptor.app || echo "No extended attributes"
+    
+    - name: Verify executable creation
+      run: |
+        echo "=== Build Output ==="
+        ls -la dist/
+        echo "=== Executable Info ==="
+        file dist/Entryptor || echo "Executable not found"
+        echo "=== Executable Size ==="
+        du -h dist/Entryptor || echo "Size check failed"
     
     - name: Package macOS artifacts
       run: |
         cd dist
-        tar -czf entryptor-macos.tar.gz Entryptor/
+        # Create a simple zip with just the executable
+        zip entryptor-macos.zip Entryptor
+        # Also create tar.gz for compatibility
+        tar -czf entryptor-macos.tar.gz Entryptor
     
     - name: Upload macOS build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: entryptor-macos
-        path: dist/entryptor-macos.tar.gz
+        path: |
+          dist/entryptor-macos.zip
+          dist/entryptor-macos.tar.gz
         retention-days: 30
     
     - name: Generate build summary
@@ -189,4 +249,19 @@ jobs:
         echo "- **Build Date**: $(date)" >> $GITHUB_STEP_SUMMARY
         echo "- **Python Version**: ${{ env.PYTHON_VERSION }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Platform**: macOS" >> $GITHUB_STEP_SUMMARY
-        echo "- **Artifact**: entryptor-macos.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifacts**: entryptor-macos.tar.gz" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📥 How to Download & Run:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Download \`entryptor-macos.tar.gz\` from Artifacts below" >> $GITHUB_STEP_SUMMARY
+        echo "2. Extract: \`tar -xzf entryptor-macos.tar.gz\`" >> $GITHUB_STEP_SUMMARY
+        echo "3. **Fix macOS Security Warning (Choose One):**" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Method 1 (Recommended)**: Right-click on \`Entryptor.app\` → **Open**" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Method 2**: Run \`xattr -cr Entryptor.app && open Entryptor.app\`" >> $GITHUB_STEP_SUMMARY
+        echo "   - **Method 3**: System Preferences → Security & Privacy → **Open Anyway**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔒 macOS Security Notice:" >> $GITHUB_STEP_SUMMARY
+        echo "If you see **'Python.framework is damaged'**, this is normal for unsigned apps." >> $GITHUB_STEP_SUMMARY
+        echo "**This is NOT a real problem!** It's macOS Gatekeeper blocking unsigned applications." >> $GITHUB_STEP_SUMMARY
+        echo "**Solution**: Use Method 1 above (right-click → Open) - don't double-click!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📖 **Full Documentation**: See \`docs/MACOS_SECURITY_SETUP.md\` for detailed instructions." >> $GITHUB_STEP_SUMMARY

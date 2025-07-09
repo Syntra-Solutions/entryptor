@@ -1,0 +1,103 @@
+# Entryptor Simple CI Pipeline - GitHub Actions
+# Faster pipeline for development feedback
+
+name: Simple CI
+
+on:
+  push:
+    branches: [ STAGING ]
+  pull_request:
+    branches: [ main, STAGING ]
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Quick validation job
+  quick-test:
+    name: Quick Tests (Python 3.11, Ubuntu)
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb qt6-base-dev
+    
+    - name: Run code quality checks
+      run: |
+        echo "🔍 Running code quality checks..."
+        ruff check .
+        ruff format --check .
+        mypy src/
+    
+    - name: Run core tests
+      run: |
+        echo "🧪 Running core unit tests..."
+        xvfb-run -a pytest tests/test_crypto/ tests/test_utils/ -v --tb=short --disable-warnings
+    
+    - name: Run integration tests
+      run: |
+        echo "🔗 Running integration tests..."
+        xvfb-run -a pytest tests/test_integration.py -v --tb=short --disable-warnings
+
+  # Build test (only on main branch)
+  build-test:
+    name: Build Test
+    needs: [quick-test]
+    if: success() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qt6-base-dev
+    
+    - name: Test build process
+      run: |
+        echo "🔨 Testing build process..."
+        python -m PyInstaller --clean --noconfirm \
+          --name "Entryptor" \
+          --windowed \
+          --onedir \
+          --add-data "src:src" \
+          src/main.py
+        
+        echo "✅ Build test completed successfully"
+        ls -la dist/
