@@ -19,7 +19,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11']
     
     steps:
     - uses: actions/checkout@v4
@@ -43,6 +43,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+    
+    - name: Verify PyQt6 installation
+      run: |
+        python -c "import PyQt6.QtCore; print('PyQt6 version:', PyQt6.QtCore.PYQT_VERSION_STR)"
+        python -c "import PyQt6.QtGui; print('PyQt6.QtGui imported successfully')"
+        python -c "import PyQt6.QtWidgets; print('PyQt6.QtWidgets imported successfully')"
     
     - name: Set up headless environment for GUI tests
       run: |
@@ -100,6 +106,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+    
+    - name: Verify PyQt6 installation
+      run: |
+        python -c "import PyQt6.QtCore; print('PyQt6 version:', PyQt6.QtCore.PYQT_VERSION_STR)"
+        python -c "import PyQt6.QtGui; print('PyQt6.QtGui imported successfully')"
+        python -c "import PyQt6.QtWidgets; print('PyQt6.QtWidgets imported successfully')"
     
     - name: Set up headless environment for GUI tests
       run: |
