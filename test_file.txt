@@ -1,0 +1,1 @@
+Hello, this is a test file for Entryptor! You can use this to test the encryption functionality.

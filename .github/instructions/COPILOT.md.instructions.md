@@ -8,6 +8,7 @@ applyTo: '**'
 - **Check `TASK.md`** before starting a new task. If the task isn't listed, add it with a brief description and today's date.
 - **Use consistent naming conventions, file structure, and architecture patterns** as described in `PLANNING.md`.
 - **Reference these files** when GitHub Copilot needs context about project patterns.
+- **When I push to remotes, first fill in the TASK.md if not done already and then go on to pushing**
 - **We should always work on STAGING branch and push to 2 remotes on STAGING branch** the main branches on remotes will be merged manually on Azure and GitHub
 - **Pushing to remote** we should always push to 2 remotes https://dev.azure.com/syntrasoftware/_git/Entryptor and https://github.com/Syntra-Solutions/entryptor
 
@@ -125,3 +126,75 @@ class DropBox(QFrame):
 ```
 
 **Root Cause**: QWidget doesn't have native border support, while QFrame is specifically designed for displaying borders and frames.
+
+### GitHub Actions Deprecated Versions & PyQt6 CI Issues
+**Issue**: GitHub Actions frequently deprecates older versions, causing build failures. Additionally, PyQt6 has compatibility issues in CI environments.
+
+**Problem**: 
+```yaml
+# This causes build failures due to deprecated versions
+- uses: actions/upload-artifact@v3  # Deprecated!
+- uses: actions/setup-python@v4    # Outdated
+- uses: actions/cache@v3           # Outdated
+
+# PyQt6 fails in CI with symbol linking errors
+- name: Test PyQt6
+  run: |
+    python -c "import PyQt6.QtCore"  # Fails in CI
+```
+
+**Solution**: Always use latest stable versions and skip GUI tests in CI:
+```yaml
+# Use latest stable versions
+- uses: actions/upload-artifact@v4
+- uses: actions/setup-python@v5
+- uses: actions/cache@v4
+- uses: actions/checkout@v4
+
+# Skip GUI tests in CI environments
+- name: Run tests (skip GUI)
+  run: |
+    pytest tests/test_crypto/ tests/test_utils/ -k "not gui"
+```
+
+**Root Cause**: 
+- GitHub regularly deprecates old action versions for security/performance
+- PyQt6 has symbol linking issues (`__Z13lcPermissionsv`) on macOS CI runners
+- CI environments don't have proper GUI display capabilities
+
+**Monitoring**: Check [GitHub Changelog](https://github.blog/changelog/) for deprecation notices.
+
+### macOS Security Warnings for Unsigned Apps
+**Issue**: Users get "Python.framework is damaged" error when trying to run downloaded macOS apps.
+
+**Problem**: 
+```
+"Python.framework" is damaged and can't be opened. You should move it to the Trash.
+```
+
+**Root Cause**: macOS Gatekeeper blocks unsigned applications by default. This is NOT a real problem - it's a security feature.
+
+**Solution**: Provide clear user instructions (multiple methods):
+```markdown
+### Method 1: Right-Click to Open (Recommended)
+1. **Don't double-click** the application
+2. **Right-click** on `Entryptor.app` 
+3. Select **"Open"** from the context menu
+4. Click **"Open"** again in the security dialog
+
+### Method 2: Terminal Command
+```bash
+xattr -cr Entryptor.app && open Entryptor.app
+```
+
+### Method 3: System Preferences
+System Preferences → Security & Privacy → "Open Anyway"
+```
+
+**Prevention**: For production apps, you need:
+- Apple Developer Program membership ($99/year)
+- Code signing certificate
+- Notarization process
+- Automatic signing in CI/CD
+
+**Documentation**: Always include macOS security instructions in README and build artifacts.

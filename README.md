@@ -46,6 +46,25 @@ pip install -r requirements.txt
 python -m src.main
 ```
 
+### Download Pre-built macOS App
+
+1. **Download** the latest release from [GitHub Actions](https://github.com/Syntra-Solutions/entryptor/actions)
+2. **Extract** the `entryptor-macos.tar.gz` file
+3. **Fix macOS Security Warning** (see below)
+
+## macOS Security Notice
+
+⚠️ **If you see "Python.framework is damaged", this is normal for unsigned apps.**
+
+**This is NOT a real problem!** It's macOS Gatekeeper blocking unsigned applications.
+
+### Quick Fix (Choose One):
+1. **Method 1 (Recommended)**: Right-click on `Entryptor.app` → **Open**
+2. **Method 2**: Run `xattr -cr Entryptor.app && open Entryptor.app`
+3. **Method 3**: System Preferences → Security & Privacy → **Open Anyway**
+
+📖 **Full Documentation**: See [`docs/MACOS_SECURITY_SETUP.md`](docs/MACOS_SECURITY_SETUP.md) for detailed instructions.
+
 ## Usage
 
 ### Basic Encryption
