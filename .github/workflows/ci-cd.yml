@@ -75,7 +75,7 @@ jobs:
 
   # Test Stage - macOS Only
   test-macos:
-    name: Test on macOS (Python ${{ env.PYTHON_VERSION }})
+    name: Test on macOS (Python 3.11)
     runs-on: macos-latest
     
     steps:
