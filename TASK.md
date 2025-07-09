@@ -24,7 +24,7 @@
 - [x] Task 15: Configure GitHub Actions CI/CD Pipeline - Added: 2025-07-08 - Priority: High - Estimate: 3-4 hours
 - [x] Task 16: Modify CI/CD Pipelines for macOS-only builds - Added: 2025-07-09 - Priority: Medium - Estimate: 1-2 hours - Completed: 2025-07-09
 - [x] Task 17: Optimize CI/CD for macOS-only testing and building - Added: 2025-07-09 - Priority: High - Estimate: 1 hour - Completed: 2025-07-09
-- [ ] Task 18: Fix PyQt6 compatibility issues with Python 3.12 - Added: 2025-07-09 - Priority: High - Estimate: 30 minutes
+- [x] Task 18: Fix PyQt6 compatibility issues with Python 3.12 - Added: 2025-07-09 - Priority: High - Estimate: 30 minutes - Completed: 2025-07-09
 
 ### Medium Priority
 - [ ] Performance optimization - Added: 2025-07-07
