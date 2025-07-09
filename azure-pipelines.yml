@@ -1,5 +1,5 @@
 # Entryptor CI/CD Pipeline
-# Build, test, and package Python application for multiple platforms
+# Test Python application on multiple platforms and build macOS app
 
 trigger:
 - main
@@ -61,41 +61,13 @@ stages:
   dependsOn: Test
   condition: succeeded()
   jobs:
-  - job: BuildArtifacts
-    displayName: 'Build Application Artifacts'
-    strategy:
-      matrix:
-        Linux:
-          imageName: 'ubuntu-latest'
-          artifactName: 'entryptor-linux'
-          displayName: 'Linux'
-        macOS:
-          imageName: 'macOS-latest'
-          artifactName: 'entryptor-macos'
-          displayName: 'macOS'
-        Windows:
-          imageName: 'windows-latest'
-          artifactName: 'entryptor-windows'
-          displayName: 'Windows'
+  - job: BuildMacOS
+    displayName: 'Build macOS Application'
     pool:
-      vmImage: $(imageName)
+      vmImage: 'macOS-latest'
     steps:
     - template: pipelines/templates/build-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
-        platform: $(displayName)
-        artifactName: $(artifactName)
-
-- stage: Package
-  displayName: 'Package Stage'
-  dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-  jobs:
-  - job: CreateRelease
-    displayName: 'Create Release Package'
-    pool:
-      vmImage: 'ubuntu-latest'
-    steps:
-    - template: pipelines/templates/package-steps.yml
-      parameters:
-        pythonVersion: $(pythonVersion)
+        platform: 'macOS'
+        artifactName: 'entryptor-macos'

@@ -1,5 +1,5 @@
 # Entryptor CI/CD Pipeline - GitHub Actions
-# Build, test, and package Python application for multiple platforms
+# Test Python application on multiple platforms and build macOS app
 
 name: CI/CD Pipeline
 
@@ -145,26 +145,12 @@ jobs:
         echo "Running tests on ${{ matrix.platform }}"
         pytest tests/ -v --tb=short --disable-warnings
 
-  # Build Stage - Artifacts for each platform
-  build-artifacts:
-    name: Build Application Artifacts
+  # Build Stage - macOS Application Only
+  build-macos:
+    name: Build macOS Application
     needs: [test-multiple-python, test-cross-platform]
     if: success()
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            platform: Linux
-            artifact-name: entryptor-linux
-          - os: macos-latest
-            platform: macOS
-            artifact-name: entryptor-macos
-          - os: windows-latest
-            platform: Windows
-            artifact-name: entryptor-windows
-    
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v4
@@ -177,10 +163,7 @@ jobs:
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
-        path: |
-          ~/.cache/pip
-          ~/Library/Caches/pip
-          ~\AppData\Local\pip\Cache
+        path: ~/Library/Caches/pip
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
@@ -192,91 +175,36 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
     
-    - name: Install platform-specific dependencies (Linux)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Create macOS application bundle
       run: |
-        sudo apt-get update
-        sudo apt-get install -y qt6-base-dev
-    
-    - name: Create application bundle
-      run: |
-        echo "Building Entryptor for ${{ matrix.platform }}"
+        echo "Building Entryptor for macOS"
         python -m PyInstaller --clean --noconfirm \
           --name "Entryptor" \
           --windowed \
           --onedir \
           --add-data "src:src" \
+          --hidden-import PyQt6.QtCore \
+          --hidden-import PyQt6.QtGui \
+          --hidden-import PyQt6.QtWidgets \
+          --hidden-import cryptography \
           src/main.py
     
-    - name: Package artifacts (Linux/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Package macOS artifacts
       run: |
         cd dist
-        tar -czf ${{ matrix.artifact-name }}.tar.gz Entryptor/
+        tar -czf entryptor-macos.tar.gz Entryptor/
     
-    - name: Package artifacts (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd dist
-        Compress-Archive -Path Entryptor -DestinationPath ${{ matrix.artifact-name }}.zip
-    
-    - name: Upload build artifacts (Linux/macOS)
-      if: matrix.os != 'windows-latest'
+    - name: Upload macOS build artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ matrix.artifact-name }}
-        path: dist/${{ matrix.artifact-name }}.tar.gz
+        name: entryptor-macos
+        path: dist/entryptor-macos.tar.gz
         retention-days: 30
-    
-    - name: Upload build artifacts (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.artifact-name }}
-        path: dist/${{ matrix.artifact-name }}.zip
-        retention-days: 30
-
-  # Package Stage - Create release package
-  create-release:
-    name: Create Release Package
-    needs: [build-artifacts]
-    if: success() && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v3
-      with:
-        path: artifacts/
-    
-    - name: Create release structure
-      run: |
-        mkdir -p release/
-        echo "Entryptor Release - $(date)" > release/README.txt
-        echo "Platform-specific builds:" >> release/README.txt
-        echo "- Linux: entryptor-linux.tar.gz" >> release/README.txt
-        echo "- macOS: entryptor-macos.tar.gz" >> release/README.txt
-        echo "- Windows: entryptor-windows.zip" >> release/README.txt
-        cp -r artifacts/* release/
-    
-    - name: Upload release package
-      uses: actions/upload-artifact@v3
-      with:
-        name: entryptor-release-package
-        path: release/
-        retention-days: 90
     
     - name: Generate build summary
       run: |
-        echo "## 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## 🚀 macOS Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Date**: $(date)" >> $GITHUB_STEP_SUMMARY
         echo "- **Python Version**: ${{ env.PYTHON_VERSION }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Platforms**: Linux, macOS, Windows" >> $GITHUB_STEP_SUMMARY
-        echo "- **Artifacts**: $(ls -la artifacts/ | wc -l) build artifacts created" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📦 Available Downloads" >> $GITHUB_STEP_SUMMARY
-        echo "- entryptor-linux.tar.gz" >> $GITHUB_STEP_SUMMARY
-        echo "- entryptor-macos.tar.gz" >> $GITHUB_STEP_SUMMARY
-        echo "- entryptor-windows.zip" >> $GITHUB_STEP_SUMMARY
+        echo "- **Platform**: macOS" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifact**: entryptor-macos.tar.gz" >> $GITHUB_STEP_SUMMARY
