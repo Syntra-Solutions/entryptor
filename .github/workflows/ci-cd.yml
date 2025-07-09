@@ -7,17 +7,171 @@ on:
   push:
     branches: [ main, STAGING ]
   pull_request:
-    branches: [ mai    - name: Verify executable creation
+    branches: [ main, STAGING ]
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Test Stage - Multiple Python Versions on macOS
+  test-multiple-python:
+    name: Test on Multiple Python Versions (macOS)
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Caches/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
       run: |
-        echo "=== Build Output ==="
-        ls -la dist/
-        echo "=== App Bundle Info ==="
-        if [ -d "dist/Entryptor.app" ]; then
-          echo "App bundle structure:"
-          find dist/Entryptor.app -name "Entryptor" -type f | head -5
-          file dist/Entryptor.app/Contents/MacOS/Entryptor 2>/dev/null || echo "Executable location varies"
-        else
-          echo "No .app bundle found, checking for executable"
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Verify core dependencies (skip GUI)
+      run: |
+        python -c "import cryptography; print('cryptography imported successfully')"
+        python -c "import pytest; print('pytest imported successfully')"
+        echo "Skipping PyQt6 verification due to macOS CI compatibility issues"
+    
+    - name: Run crypto tests
+      run: |
+        echo "Running crypto tests with Python ${{ matrix.python-version }}"
+        pytest tests/test_crypto/ -v --tb=short
+    
+    - name: Run utils tests
+      run: |
+        echo "Running utils tests with Python ${{ matrix.python-version }}"
+        pytest tests/test_utils/ -v --tb=short
+    
+    - name: Run integration tests (skip GUI)
+      run: |
+        echo "Running integration tests with Python ${{ matrix.python-version }}"
+        pytest tests/test_integration.py -v --tb=short -k "not gui"
+
+  # Test Stage - macOS Only
+  test-macos:
+    name: Test on macOS (Python 3.11)
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Caches/pip
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Verify core dependencies (skip GUI for now)
+      run: |
+        python -c "import cryptography; print('cryptography imported successfully')"
+        python -c "import pytest; print('pytest imported successfully')"
+        echo "Skipping PyQt6 verification due to macOS CI compatibility issues"
+    
+    - name: Set up headless environment for GUI tests
+      run: |
+        export QT_QPA_PLATFORM=offscreen
+        echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+        echo "macOS headless GUI setup complete"
+    
+    - name: Run comprehensive tests (skip GUI components)
+      env:
+        QT_QPA_PLATFORM: offscreen
+        CI: true
+      run: |
+        echo "Running comprehensive tests on macOS"
+        pytest tests/test_crypto/ tests/test_utils/ tests/test_integration.py -v --tb=short --disable-warnings -k "not gui"
+
+  # Build Stage - macOS Only
+  build-macos:
+    name: Build macOS Application
+    runs-on: macos-latest
+    needs: [test-multiple-python, test-macos]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Caches/pip
+        key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install pyinstaller
+    
+    - name: Build macOS executable
+      run: |
+        echo "Building macOS executable with PyInstaller"
+        pyinstaller --onefile --windowed --name=Entryptor src/main.py
+        echo "Build completed"
+    
+    - name: Create app bundle structure
+      run: |
+        cd dist
+        # Rename to proper .app extension if not already
+        if [ -d "Entryptor" ] && [ ! -d "Entryptor.app" ]; then
+          mv Entryptor Entryptor.app
+        fi
+        
+        # Verify app structure
+        ls -la Entryptor.app/
+        echo "App bundle created successfully"
+    
+    - name: Remove quarantine attributes (for local testing)
+      run: |
+        echo "Removing quarantine attributes from the app bundle"
+        cd dist
+        # Remove quarantine attribute that macOS adds to downloaded files
+        xattr -cr Entryptor.app || echo "No quarantine attributes found"
+        
+        # List remaining attributes
+        xattr -l Entryptor.app || echo "No extended attributes"
+    
+    - name: Verify executable creation
           file dist/Entryptor 2>/dev/null || echo "Executable not found"
         fi
     
