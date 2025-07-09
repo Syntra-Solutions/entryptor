@@ -48,7 +48,6 @@ jobs:
       run: |
         python -c "import cryptography; print('cryptography imported successfully')"
         python -c "import pytest; print('pytest imported successfully')"
-        python -c "import pydantic; print('pydantic imported successfully')"
         echo "Skipping PyQt6 verification due to macOS CI compatibility issues"
     
     - name: Set up headless environment for GUI tests
@@ -112,7 +111,6 @@ jobs:
       run: |
         python -c "import cryptography; print('cryptography imported successfully')"
         python -c "import pytest; print('pytest imported successfully')"
-        python -c "import pydantic; print('pydantic imported successfully')"
         echo "Skipping PyQt6 verification due to macOS CI compatibility issues"
     
     - name: Set up headless environment for GUI tests
