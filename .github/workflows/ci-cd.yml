@@ -1,5 +1,5 @@
 # Entryptor CI/CD Pipeline - GitHub Actions
-# Test Python application on multiple platforms and build macOS app
+# Test and build Python application for macOS only
 
 name: CI/CD Pipeline
 
@@ -13,13 +13,13 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
-  # Test Stage - Multiple Python Versions
+  # Test Stage - Multiple Python Versions on macOS
   test-multiple-python:
-    name: Test on Multiple Python Versions (Linux)
-    runs-on: ubuntu-latest
+    name: Test on Multiple Python Versions (macOS)
+    runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12']
     
     steps:
     - uses: actions/checkout@v4
@@ -32,7 +32,7 @@ jobs:
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
-        path: ~/.cache/pip
+        path: ~/Library/Caches/pip
         key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
@@ -44,6 +44,12 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
     
+    - name: Set up headless environment for GUI tests
+      run: |
+        export QT_QPA_PLATFORM=offscreen
+        echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+        echo "macOS headless GUI setup complete"
+    
     - name: Run code quality checks
       run: |
         echo "Running code quality checks with Python ${{ matrix.python-version }}"
@@ -52,30 +58,25 @@ jobs:
         mypy src/
     
     - name: Run unit tests
+      env:
+        QT_QPA_PLATFORM: offscreen
+        CI: true
       run: |
         echo "Running unit tests with Python ${{ matrix.python-version }}"
         pytest tests/ -v --tb=short --disable-warnings
     
     - name: Run integration tests
+      env:
+        QT_QPA_PLATFORM: offscreen
+        CI: true
       run: |
         echo "Running integration tests with Python ${{ matrix.python-version }}"
         pytest tests/test_integration.py -v --tb=short
 
-  # Test Stage - Cross Platform
-  test-cross-platform:
-    name: Test Cross-Platform
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            platform: Linux
-          - os: macos-latest
-            platform: macOS
-          - os: windows-latest
-            platform: Windows
-    
-    runs-on: ${{ matrix.os }}
+  # Test Stage - macOS Only
+  test-macos:
+    name: Test on macOS (Python ${{ env.PYTHON_VERSION }})
+    runs-on: macos-latest
     
     steps:
     - uses: actions/checkout@v4
@@ -88,10 +89,7 @@ jobs:
     - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
-        path: |
-          ~/.cache/pip
-          ~/Library/Caches/pip
-          ~\AppData\Local\pip\Cache
+        path: ~/Library/Caches/pip
         key: ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/requirements*.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-${{ env.PYTHON_VERSION }}-
@@ -103,52 +101,24 @@ jobs:
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
     
-    - name: Install platform-specific dependencies (Linux)
-      if: matrix.os == 'ubuntu-latest'
+    - name: Set up headless environment for GUI tests
       run: |
-        sudo apt-get update
-        sudo apt-get install -y xvfb
-        # Install Qt platform plugin for headless testing
-        sudo apt-get install -y qt6-base-dev
-    
-    - name: Install platform-specific dependencies (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        # Set up headless environment for GUI tests on macOS
         export QT_QPA_PLATFORM=offscreen
         echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
         echo "macOS headless GUI setup complete"
     
-    - name: Install platform-specific dependencies (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        # Set up headless environment for GUI tests on Windows  
-        echo "QT_QPA_PLATFORM=offscreen" >> $env:GITHUB_ENV
-        echo "Windows headless GUI setup complete"
-    
-    - name: Run tests with platform display (Linux)
-      if: matrix.os == 'ubuntu-latest'
-      env:
-        DISPLAY: :99
-        QT_QPA_PLATFORM: offscreen
-        CI: true
-      run: |
-        echo "Running tests on ${{ matrix.platform }}"
-        xvfb-run -a pytest tests/ -v --tb=short --disable-warnings
-    
-    - name: Run tests (macOS/Windows)
-      if: matrix.os != 'ubuntu-latest'
+    - name: Run tests
       env:
         QT_QPA_PLATFORM: offscreen
         CI: true
       run: |
-        echo "Running tests on ${{ matrix.platform }}"
+        echo "Running comprehensive tests on macOS"
         pytest tests/ -v --tb=short --disable-warnings
 
   # Build Stage - macOS Application Only
   build-macos:
     name: Build macOS Application
-    needs: [test-multiple-python, test-cross-platform]
+    needs: [test-multiple-python, test-macos]
     if: success()
     runs-on: macos-latest
     

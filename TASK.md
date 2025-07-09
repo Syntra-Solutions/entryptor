@@ -23,6 +23,7 @@
 - [x] Task 14: Add File Deselection Feature to DropBox - Added: 2025-07-07 - Priority: Medium - Estimate: 2-3 hours
 - [x] Task 15: Configure GitHub Actions CI/CD Pipeline - Added: 2025-07-08 - Priority: High - Estimate: 3-4 hours
 - [x] Task 16: Modify CI/CD Pipelines for macOS-only builds - Added: 2025-07-09 - Priority: Medium - Estimate: 1-2 hours - Completed: 2025-07-09
+- [ ] Task 17: Optimize CI/CD for macOS-only testing and building - Added: 2025-07-09 - Priority: High - Estimate: 1 hour
 
 ### Medium Priority
 - [ ] Performance optimization - Added: 2025-07-07
