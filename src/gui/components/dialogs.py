@@ -4,8 +4,17 @@ import os
 from typing import Optional
 
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QCheckBox,
-    QPushButton, QTextBrowser, QDialogButtonBox, QMessageBox, QWidget
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QComboBox,
+    QCheckBox,
+    QPushButton,
+    QTextBrowser,
+    QDialogButtonBox,
+    QMessageBox,
+    QWidget,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -16,16 +25,16 @@ from ...utils.resources import get_help_file_path
 
 class SettingsDialog(QDialog):
     """Settings dialog for configuring application preferences."""
-    
+
     def __init__(
-        self, 
-        current_extension_option: str, 
-        use_keyfile: bool = False, 
-        parent: Optional[QWidget] = None
+        self,
+        current_extension_option: str,
+        use_keyfile: bool = False,
+        parent: Optional[QWidget] = None,
     ) -> None:
         """
         Initialize settings dialog.
-        
+
         Args:
             current_extension_option: Current extension preservation option
             use_keyfile: Whether keyfile mode is enabled
@@ -36,44 +45,43 @@ class SettingsDialog(QDialog):
         self.keyfile_toggle: Optional[QCheckBox] = None
         self._setup_ui(current_extension_option, use_keyfile)
         self._connect_signals()
-    
+
     def _setup_ui(self, current_extension_option: str, use_keyfile: bool) -> None:
         """Set up the user interface."""
         self.setWindowTitle("Settings")
         self.setModal(True)
         self.setMinimumWidth(400)
-        
+
         # Main layout
         layout = QVBoxLayout()
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
-        
+
         # Extension handling section
         extension_layout = QHBoxLayout()
         extension_label = QLabel("File Extension:")
         extension_label.setMinimumWidth(120)
-        
+
         self.extension_combo = QComboBox()
-        self.extension_combo.addItems([
-            "Preserve original extension",
-            "Manual extension selection"
-        ])
-        
+        self.extension_combo.addItems(
+            ["Preserve original extension", "Manual extension selection"]
+        )
+
         # Set current selection
         if current_extension_option == "Preserve original extension":
             self.extension_combo.setCurrentIndex(0)
         else:
             self.extension_combo.setCurrentIndex(1)
-        
+
         extension_layout.addWidget(extension_label)
         extension_layout.addWidget(self.extension_combo)
         layout.addLayout(extension_layout)
-        
+
         # Keyfile mode section
         self.keyfile_toggle = QCheckBox("Use Keyfile instead of password")
         self.keyfile_toggle.setChecked(use_keyfile)
         layout.addWidget(self.keyfile_toggle)
-        
+
         # Info label
         info_label = QLabel(
             "Extension preservation is available in both password and keyfile modes."
@@ -81,71 +89,78 @@ class SettingsDialog(QDialog):
         info_label.setWordWrap(True)
         info_label.setStyleSheet("color: #888888; font-size: 12px;")
         layout.addWidget(info_label)
-        
+
         # Buttons
         button_box = QDialogButtonBox(
-            QDialogButtonBox.StandardButton.Ok | 
-            QDialogButtonBox.StandardButton.Cancel
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
-        
+
         self.setLayout(layout)
-        
-        # Connect signals 
+
+        # Connect signals
         self._connect_signals()
-    
+
     def _connect_signals(self) -> None:
         """Connect widget signals."""
         # No need to disable extension combo based on keyfile mode anymore
         pass
-    
+
     def get_extension_option(self) -> str:
         """
         Get the selected extension option.
-        
+
         Returns:
             Selected extension option text
         """
         return self.extension_combo.currentText() if self.extension_combo else ""
-    
+
     def get_use_keyfile(self) -> bool:
         """
         Get keyfile mode setting.
-        
+
         Returns:
             True if keyfile mode is enabled
         """
         return self.keyfile_toggle.isChecked() if self.keyfile_toggle else False
-    
+
     def get_encryption_mode(self) -> EncryptionMode:
         """
         Get encryption mode enum value.
-        
+
         Returns:
             EncryptionMode enum value
         """
-        return EncryptionMode.KEYFILE if self.get_use_keyfile() else EncryptionMode.PASSWORD
-    
+        return (
+            EncryptionMode.KEYFILE
+            if self.get_use_keyfile()
+            else EncryptionMode.PASSWORD
+        )
+
     def get_extension_option_enum(self) -> ExtensionOption:
         """
         Get extension option enum value.
-        
+
         Returns:
             ExtensionOption enum value
         """
         option_text = self.get_extension_option()
-        return ExtensionOption.PRESERVE if "Preserve" in option_text else ExtensionOption.MANUAL
+        return (
+            ExtensionOption.PRESERVE
+            if "Preserve" in option_text
+            else ExtensionOption.MANUAL
+        )
 
 
 class HelpDialog(QDialog):
     """Help dialog for displaying application help content."""
-    
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize help dialog.
-        
+
         Args:
             parent: Parent widget
         """
@@ -153,46 +168,46 @@ class HelpDialog(QDialog):
         self.text_browser: Optional[QTextBrowser] = None
         self._setup_ui()
         self._load_help_content()
-    
+
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle("Entryptor Help")
         self.setMinimumSize(800, 600)
-        
+
         # Main layout
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
-        
+
         # Text browser
         self.text_browser = QTextBrowser()
         self.text_browser.setOpenExternalLinks(True)
-        
+
         # Set font
         font = QFont()
         font.setFamily("Arial")
         font.setPointSize(11)
         self.text_browser.setFont(font)
-        
+
         layout.addWidget(self.text_browser)
-        
+
         # Close button
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
-        
+
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(close_button)
         layout.addLayout(button_layout)
-        
+
         self.setLayout(layout)
-    
+
     def _load_help_content(self) -> None:
         """Load help content from file."""
         help_file_path = get_help_file_path()
-        
+
         if help_file_path and os.path.exists(help_file_path):
             try:
-                with open(help_file_path, 'r', encoding='utf-8') as f:
+                with open(help_file_path, "r", encoding="utf-8") as f:
                     help_content = f.read()
                     if self.text_browser:
                         self.text_browser.setMarkdown(help_content)
@@ -200,7 +215,7 @@ class HelpDialog(QDialog):
                 self._show_error(f"Error loading help content: {str(e)}")
         else:
             self._show_default_help()
-    
+
     def _show_default_help(self) -> None:
         """Show default help content when help file is not available."""
         default_help = """
@@ -249,10 +264,10 @@ Entryptor is a secure file encryption and decryption application that provides s
 ## Support
 For additional support, please refer to the documentation or contact support.
         """
-        
+
         if self.text_browser:
             self.text_browser.setMarkdown(default_help)
-    
+
     def _show_error(self, message: str) -> None:
         """Show an error message."""
         if self.text_browser:
@@ -261,27 +276,27 @@ For additional support, please refer to the documentation or contact support.
 
 class AboutDialog(QDialog):
     """About dialog for displaying application information."""
-    
+
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initialize about dialog.
-        
+
         Args:
             parent: Parent widget
         """
         super().__init__(parent)
         self._setup_ui()
-    
+
     def _setup_ui(self) -> None:
         """Set up the user interface."""
         self.setWindowTitle("About Entryptor")
         self.setFixedSize(400, 300)
-        
+
         # Main layout
         layout = QVBoxLayout()
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(20)
-        
+
         # Application name
         app_name = QLabel("Entryptor")
         app_name.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -290,13 +305,13 @@ class AboutDialog(QDialog):
         font.setBold(True)
         app_name.setFont(font)
         layout.addWidget(app_name)
-        
+
         # Version
         version_label = QLabel("Version 2.0.0")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         version_label.setStyleSheet("color: #888888;")
         layout.addWidget(version_label)
-        
+
         # Description
         description = QLabel(
             "A secure file encryption and decryption application\\n"
@@ -305,31 +320,31 @@ class AboutDialog(QDialog):
         description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         description.setWordWrap(True)
         layout.addWidget(description)
-        
+
         # Copyright
         copyright_label = QLabel("© 2025 Syntra for Business Solutions")
         copyright_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         copyright_label.setStyleSheet("color: #888888; font-size: 12px;")
         layout.addWidget(copyright_label)
-        
+
         layout.addStretch()
-        
+
         # Close button
         close_button = QPushButton("Close")
         close_button.clicked.connect(self.accept)
-        
+
         button_layout = QHBoxLayout()
         button_layout.addStretch()
         button_layout.addWidget(close_button)
         layout.addLayout(button_layout)
-        
+
         self.setLayout(layout)
 
 
 def show_error_dialog(parent: Optional[QWidget], title: str, message: str) -> None:
     """
     Show an error dialog.
-    
+
     Args:
         parent: Parent widget
         title: Dialog title
@@ -345,7 +360,7 @@ def show_error_dialog(parent: Optional[QWidget], title: str, message: str) -> No
 def show_info_dialog(parent: Optional[QWidget], title: str, message: str) -> None:
     """
     Show an information dialog.
-    
+
     Args:
         parent: Parent widget
         title: Dialog title
@@ -361,12 +376,12 @@ def show_info_dialog(parent: Optional[QWidget], title: str, message: str) -> Non
 def show_warning_dialog(parent: Optional[QWidget], title: str, message: str) -> bool:
     """
     Show a warning dialog with Yes/No buttons.
-    
+
     Args:
         parent: Parent widget
         title: Dialog title
         message: Warning message
-        
+
     Returns:
         True if user clicked Yes, False otherwise
     """
@@ -374,8 +389,10 @@ def show_warning_dialog(parent: Optional[QWidget], title: str, message: str) -> 
     msg_box.setIcon(QMessageBox.Icon.Warning)
     msg_box.setWindowTitle(title)
     msg_box.setText(message)
-    msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+    msg_box.setStandardButtons(
+        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+    )
     msg_box.setDefaultButton(QMessageBox.StandardButton.No)
-    
+
     result = msg_box.exec()
     return result == QMessageBox.StandardButton.Yes
