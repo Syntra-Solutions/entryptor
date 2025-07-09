@@ -1,5 +1,5 @@
 # Entryptor CI/CD Pipeline
-# Test Python application on multiple platforms and build macOS app
+# Test and build Python application for macOS only
 
 trigger:
 - main
@@ -15,46 +15,29 @@ stages:
   displayName: 'Test Stage'
   jobs:
   - job: TestMultiplePython
-    displayName: 'Test on Multiple Python Versions (Linux)'
+    displayName: 'Test on Multiple Python Versions (macOS)'
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: 'macOS-latest'
     strategy:
       matrix:
-        Python38:
-          python.version: '3.8'
-        Python39:
-          python.version: '3.9'
         Python310:
           python.version: '3.10'
         Python311:
           python.version: '3.11'
-        Python312:
-          python.version: '3.12'
     steps:
     - template: pipelines/templates/test-steps.yml
       parameters:
         pythonVersion: '$(python.version)'
 
-  - job: TestCrossPlatform
-    displayName: 'Test Cross-Platform'
-    strategy:
-      matrix:
-        Linux:
-          imageName: 'ubuntu-latest'
-          displayName: 'Linux'
-        macOS:
-          imageName: 'macOS-latest'
-          displayName: 'macOS'
-        Windows:
-          imageName: 'windows-latest'
-          displayName: 'Windows'
+  - job: TestMacOS
+    displayName: 'Test macOS Platform'
     pool:
-      vmImage: $(imageName)
+      vmImage: 'macOS-latest'
     steps:
     - template: pipelines/templates/test-steps.yml
       parameters:
         pythonVersion: $(pythonVersion)
-        platform: $(displayName)
+        platform: 'macOS'
 
 - stage: Build
   displayName: 'Build Stage'
